@@ -1,11 +1,3 @@
-# initial value solver
-
-# %%
-import numpy as np
-import matplotlib.pyplot as plt
-import scipy
-import math
-# %%
 def func1(x, t):
     dxdt = np.array(x)
     return dxdt
@@ -51,27 +43,7 @@ def solve_to(method, func, x0, t0, t_goal, delta_t):
             x, t = rk4_step(func, x, t, delta_t)
             x_pred.append(x)
     return x_pred
-# %%
-x0 = 1
-t0 = 0
-t_goal = 1
-n_steps = 10
-method = 'euler'
 
-delta_t = (t_goal-t0)/(n_steps)
-t = np.linspace(t0, t_goal, n_steps+1)
-x_pred = solve_to(method, func1, x0, t0, t_goal, delta_t)
-
-sp_t = np.linspace(t0, t_goal, 101)
-sp_odeint = scipy.integrate.odeint(func1, x0, sp_t)
-x_true = math.e**sp_t
-
-plt.plot(sp_t, x_true, t, x_pred)
-# %%
-x0 = 1
-t0 = 0
-t_goal = 1
-x1_true = math.e**t_goal
 
 def t_step_trials(func, x0, t0, t_goal, x1_true):
     delta_t_stor = []
@@ -96,19 +68,3 @@ def t_step_trials(func, x0, t0, t_goal, x1_true):
     plt.legend(['Euler', 'RK4'])
 
     return delta_t_stor, err_abs_euler_stor, err_abs_rk4_stor
-# %%
-dt, err_abs_euler, err_abs_rk4 = t_step_trials(func1, x0, t0, t_goal, x1_true)
-# %%
-x0 = [1, 1]
-t0 = 0
-t_goal = 1
-n_steps = 10
-method = 'euler'
-
-delta_t = (t_goal-t0)/(n_steps)
-t = np.linspace(t0, t_goal, n_steps+1)
-x_pred = solve_to(method, func2, x0, t0, t_goal, delta_t)
-plt.plot(t, [i[0] for i in x_pred], t, [i[1] for i in x_pred])
-
-sp_t = np.linspace(t0, t_goal, 101)
-sp_odeint = scipy.integrate.odeint(func2, x0, sp_t)
