@@ -1,14 +1,22 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-def func1(x, t):
+
+def func1_week_2(x, t):
     dxdt = np.array(x)
     return dxdt
 
 
-def func2(x, t):
+def func2_week_2(x, t):
     x1, x2 = x
     dxdt = np.array([x2, -x1])
+    return dxdt
+
+
+def func1_week_3(x, t, *args):
+    a, b, d = args
+    x1, x2 = x
+    dxdt = np.array([(x1*(1-x1)) - ((a*x1*x2)/(d+x1)), b*x2*(1-(x2/x1))])
     return dxdt
 
 
@@ -20,10 +28,10 @@ def euler_step(func, x, t, delta_t):
     return x + grad*delta_t, t_new
 
 
-def rk4_step(func, x, t, delta_t):
+def rk4_step(func, x, t, delta_t, *args):
     # does one rk4 step
     # x = current value, t = current t, = delta_t = timestep.
-    k1 = grad = func(x, t)
+    k1 = grad = func(x, t, *args)
     k2 = grad + (k1*delta_t)/2
     k3 = grad + (k2*delta_t)/2
     k4 = grad + (k3*delta_t)
@@ -31,7 +39,7 @@ def rk4_step(func, x, t, delta_t):
     return x + (k1/6 + k2/3 + k3/3 + k4/6)*delta_t, t_new
 
 
-def solve_to(method, func, x0, t0, t_goal, delta_t):
+def solve_to(method, func, x0, t0, t_goal, delta_t, *args):
     # solves from x0,t0 to x_goal,t_goal
     t = t0
     x = x0
@@ -43,7 +51,7 @@ def solve_to(method, func, x0, t0, t_goal, delta_t):
             x_pred.append(x)
     elif method == 'rk4':
         for step in range(0, steps):
-            x, t = rk4_step(func, x, t, delta_t)
+            x, t = rk4_step(func, x, t, delta_t, *args)
             x_pred.append(x)
     return x_pred
 
