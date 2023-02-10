@@ -1,3 +1,6 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
 def func1(x, t):
     dxdt = np.array(x)
     return dxdt
