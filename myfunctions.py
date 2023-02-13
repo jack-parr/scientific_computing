@@ -30,7 +30,7 @@ def solve_to(func, method, x1, t1, t2, deltat_max, *args):
         fstep = rk4_step
 
     x_sol = np.empty(shape=(math.ceil((t2-t1)/deltat_max)+2, len(x1)))
-    t_sol = np.empty(shape=(math.ceil((t2-t1)/deltat_max)+2, len(x1)))
+    t_sol = np.empty(shape=(math.ceil((t2-t1)/deltat_max)+2, 1))
     x_sol[0, :] = x1
     t_sol[0, :] = t1
 
