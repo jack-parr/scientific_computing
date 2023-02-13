@@ -1,41 +1,52 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import math
 
 
-def euler_step(func, x, t, delta_t, *args):
+def euler_step(func, x0, t0, delta_t, *args):
     # does one euler step
     # x = current value, t = current t, = delta_t = timestep.
-    grad = func(x, t, *args)
-    t_new = t + delta_t
-    return x + grad*delta_t, t_new
+    grad = func(x0, t0, *args)
+    t1 = t0 + delta_t
+    return x0 + grad*delta_t, t1
 
 
-def rk4_step(func, x, t, delta_t, *args):
+def rk4_step(func, x0, t0, delta_t, *args):
     # does one rk4 step
     # x = current value, t = current t, = delta_t = timestep.
-    k1 = grad = func(x, t, *args)
+    k1 = grad = func(x0, t0, *args)
     k2 = grad + (k1*delta_t)/2
     k3 = grad + (k2*delta_t)/2
     k4 = grad + (k3*delta_t)
-    t_new = t + delta_t
-    return x + (k1/6 + k2/3 + k3/3 + k4/6)*delta_t, t_new
+    t1 = t0 + delta_t
+    return x0 + (k1/6 + k2/3 + k3/3 + k4/6)*delta_t, t1
 
 
-def solve_to(method, func, x0, t0, t_goal, delta_t, *args):
-    # solves from x0,t0 to x_goal,t_goal
-    t = t0
-    x = x0
-    x_pred = [x]
-    steps = round((t_goal-t0)/delta_t)
-    if method == 'euler':    
-        for step in range(0, steps):
-            x, t = euler_step(func, x, t, delta_t, *args)
-            x_pred.append(x)
+def solve_to(func, method, x1, t1, t2, deltat_max, *args):
+    # solves from x1,t1 to x2,t2.
+    if method == 'euler':
+        fstep = euler_step
     elif method == 'rk4':
-        for step in range(0, steps):
-            x, t = rk4_step(func, x, t, delta_t, *args)
-            x_pred.append(x)
-    return x_pred
+        fstep = rk4_step
+
+    x_sol = np.empty(shape=(math.ceil((t2-t1)/deltat_max)+2, len(x1)))
+    t_sol = np.empty(shape=(math.ceil((t2-t1)/deltat_max)+2, len(x1)))
+    i = 1
+    x1 = x1[0]
+    x_sol[0, :] = x1
+    t_sol[0, :] = t1
+    while t2 - t1 > deltat_max:
+        x1, t1 = fstep(func, x1, t1, deltat_max, *args)
+        x_sol[i, :] = x1
+        t_sol[i, :] = t1
+        i += 1
+    else:
+        x1, t1 = fstep(func, x1, t1, t2-t1, *args)
+        x_sol[i, :] = x1
+        t_sol[i, :] = t1
+        i += 1
+
+    return x_sol, t_sol
 
 
 def t_step_trials(func, x0, t0, t_goal, x1_true, *args):
