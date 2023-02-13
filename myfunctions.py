@@ -31,10 +31,10 @@ def solve_to(func, method, x1, t1, t2, deltat_max, *args):
 
     x_sol = np.empty(shape=(math.ceil((t2-t1)/deltat_max)+2, len(x1)))
     t_sol = np.empty(shape=(math.ceil((t2-t1)/deltat_max)+2, len(x1)))
-    i = 1
-    x1 = x1[0]
     x_sol[0, :] = x1
     t_sol[0, :] = t1
+
+    i = 1
     while t2 - t1 > deltat_max:
         x1, t1 = fstep(func, x1, t1, deltat_max, *args)
         x_sol[i, :] = x1

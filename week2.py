@@ -8,6 +8,7 @@ import math
 import myfunctions as myfunc
 # %%
 def func1(x, t):
+    x = x[0]
     dxdt = np.array(x)
     return dxdt
 
@@ -47,7 +48,6 @@ sp_odeint = scipy.integrate.odeint(func1, x0, sp_t)
 x_true = math.e**sp_t
 
 x_newpred, t_newpred = myfunc.solve_to(func1, 'rk4', [1], 0, 10, 0.1)
-new_funct = np.linspace(0, 10, len(x_newpred))
 
 plt.plot(sp_t, sp_odeint, t_newpred, x_newpred)
 # %%
@@ -86,12 +86,14 @@ x0 = [1, 1]
 t0 = 0
 t_goal = 1
 n_steps = 10
-method = 'euler'
+method = 'rk4'
 
 delta_t = (t_goal-t0)/(n_steps)
 t = np.linspace(t0, t_goal, n_steps+1)
-x_pred = myfunc.solve_to(method, func2, x0, t0, t_goal, delta_t)
-plt.plot(t, [i[0] for i in x_pred], t, [i[1] for i in x_pred])
+# x_pred = myfunc.solve_to(method, func2, x0, t0, t_goal, delta_t)
+x_pred, t_pred = myfunc.solve_to(func2, 'rk4', [1, 1], 0, 10, 0.1)
+#plt.plot(t, [i[0] for i in x_pred], t, [i[1] for i in x_pred])
 
-sp_t = np.linspace(t0, t_goal, 101)
-sp_odeint = scipy.integrate.odeint(func2, x0, sp_t)
+#sp_t = np.linspace(t0, t_goal, 101)
+#sp_odeint = scipy.integrate.odeint(func2, x0, sp_t)
+# %%
