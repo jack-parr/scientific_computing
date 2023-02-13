@@ -2,28 +2,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-def func1_week_2(x, t):
-    dxdt = np.array(x)
-    return dxdt
-
-
-def func2_week_2(x, t):
-    x1, x2 = x
-    dxdt = np.array([x2, -x1])
-    return dxdt
-
-
-def func1_week_3(x, t, *args):
-    a, b, d = args
-    x1, x2 = x
-    dxdt = np.array([(x1*(1-x1)) - ((a*x1*x2)/(d+x1)), b*x2*(1-(x2/x1))])
-    return dxdt
-
-
-def euler_step(func, x, t, delta_t):
+def euler_step(func, x, t, delta_t, *args):
     # does one euler step
     # x = current value, t = current t, = delta_t = timestep.
-    grad = func(x, t)
+    grad = func(x, t, *args)
     t_new = t + delta_t
     return x + grad*delta_t, t_new
 
@@ -47,7 +29,7 @@ def solve_to(method, func, x0, t0, t_goal, delta_t, *args):
     steps = round((t_goal-t0)/delta_t)
     if method == 'euler':    
         for step in range(0, steps):
-            x, t = euler_step(func, x, t, delta_t)
+            x, t = euler_step(func, x, t, delta_t, *args)
             x_pred.append(x)
     elif method == 'rk4':
         for step in range(0, steps):
@@ -56,7 +38,7 @@ def solve_to(method, func, x0, t0, t_goal, delta_t, *args):
     return x_pred
 
 
-def t_step_trials(func, x0, t0, t_goal, x1_true):
+def t_step_trials(func, x0, t0, t_goal, x1_true, *args):
     delta_t_stor = []
     err_abs_euler_stor = []
     err_abs_rk4_stor = []
@@ -64,11 +46,11 @@ def t_step_trials(func, x0, t0, t_goal, x1_true):
         delta_t = (t_goal-t0)/(n_steps)
         delta_t_stor.append(delta_t)
 
-        x_pred_euler = solve_to('euler', func, x0, t0, t_goal, delta_t)
+        x_pred_euler = solve_to('euler', func, x0, t0, t_goal, delta_t, *args)
         x1_pred_euler = x_pred_euler[-1]
         err_abs_euler_stor.append(abs(x1_true - x1_pred_euler))
 
-        x_pred_rk4 = solve_to('rk4', func, x0, t0, t_goal, delta_t)
+        x_pred_rk4 = solve_to('rk4', func, x0, t0, t_goal, delta_t, *args)
         x1_pred_rk4 = x_pred_rk4[-1]
         err_abs_rk4_stor.append(abs(x1_true - x1_pred_rk4))
     
