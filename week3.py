@@ -31,9 +31,9 @@ plt.plot(t_sol[lc_start]*np.ones(2), np.array([0, np.max([np.max(x1_sol), np.max
 plt.plot(t_sol[lc_end]*np.ones(2), np.array([0, np.max([np.max(x1_sol), np.max(x2_sol)])]), c='r')
 # %%
 # functions needed:
-# define problem and boundary conditions
-# something that copies fsolve
-# phase condition is dx/dt(0) = 0
+# define shooting problem
+# phase condition
+# orbit shooter
 # %%
 def test_func(x, *args):
     x1, x2, x3 = x
@@ -49,3 +49,18 @@ x2_init = 0.1
 root = scipy.optimize.fsolve(test_func, [x1_init, x2_init, x1_init-0.61], args=(a,b,d))
 print(root)
 # %%
+def shooting_prob(func):
+    def G(x0, *args):
+        T = x0[-1]
+        x1 = x0[:-1]
+        x_sol = myfunc.solve_to(func, 'rk4', x1, 0, T, 0.1, *args)
+        phase_con = func(x1, 0, *args)
+        G_vec = [x1 - x_sol[-1], phase_con[0]]
+        return G_vec
+    return G
+
+
+def orbit_shoot(func, x0, solver, *args):
+    G = shooting_prob(func)
+    orbit = solver(G, x0, *args)
+    return orbit
