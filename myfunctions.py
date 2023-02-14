@@ -29,10 +29,8 @@ def solve_to(func, method, x1, t1, t2, deltat_max, args):
     elif method == 'rk4':
         fstep = rk4_step
 
-    #x_sol = np.empty(shape=(math.ceil((t2-t1)/deltat_max)+2, len(x1)))
-    #t_sol = np.empty(shape=(math.ceil((t2-t1)/deltat_max)+2, 1))
-    #x_sol[0, :] = x1
-    #t_sol[0, :] = t1
+    # before submission, figure out how to create a complete array and then fill in the positions,
+    # instead of appending each time (more efficient)
     x_sol = []
     t_sol = []
     x_sol.append(x1)
@@ -41,15 +39,11 @@ def solve_to(func, method, x1, t1, t2, deltat_max, args):
     i = 1
     while t2 - t1 > deltat_max:
         x1, t1 = fstep(func, x1, t1, deltat_max, args)
-        #x_sol[i, :] = x1
-        #t_sol[i, :] = t1
         x_sol.append(x1)
         t_sol.append(t1)
         i += 1
     else:
         x1, t1 = fstep(func, x1, t1, t2-t1, args)
-        #x_sol[i, :] = x1
-        #t_sol[i, :] = t1
         x_sol.append(x1)
         t_sol.append(t1)
         i += 1

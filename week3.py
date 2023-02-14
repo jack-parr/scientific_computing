@@ -64,3 +64,4 @@ plt.plot(x1_orb, x2_orb)
 plt.xlabel('X')
 plt.ylabel('Y')
 plt.title('Predator Prey Model')
+# This is the same orbit as is shown in the time series plot.
