@@ -22,26 +22,26 @@ def rk4_step(func, x0, t0, delta_t, *args):
     return x0 + (k1/6 + k2/3 + k3/3 + k4/6)*delta_t, t1
 
 
-def solve_to(func, method, x1, t1, t2, deltat_max, *args):
+def solve_to(func, method, x1, t1, t2, deltat_max, args):
     # solves from x1,t1 to x2,t2.
     if method == 'euler':
         fstep = euler_step
     elif method == 'rk4':
         fstep = rk4_step
 
-    x_sol = np.empty(shape=(math.ceil((t2-t1)/deltat_max)+2, len(x1)))
-    t_sol = np.empty(shape=(math.ceil((t2-t1)/deltat_max)+2, 1))
+    x_sol = np.empty(shape=(math.ceil(abs((t2-t1)/deltat_max))+2, len(x1)))
+    t_sol = np.empty(shape=(math.ceil(abs((t2-t1)/deltat_max))+2, 1))
     x_sol[0, :] = x1
     t_sol[0, :] = t1
 
     i = 1
     while t2 - t1 > deltat_max:
-        x1, t1 = fstep(func, x1, t1, deltat_max, *args)
+        x1, t1 = fstep(func, x1, t1, deltat_max, args)
         x_sol[i, :] = x1
         t_sol[i, :] = t1
         i += 1
     else:
-        x1, t1 = fstep(func, x1, t1, t2-t1, *args)
+        x1, t1 = fstep(func, x1, t1, t2-t1, args)
         x_sol[i, :] = x1
         t_sol[i, :] = t1
         i += 1
