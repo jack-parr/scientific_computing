@@ -32,3 +32,5 @@ d = 0.1
 orbit = shooting.orbit_shoot(pred_prey, [0.6, 0.6, 20], pp_pc, sp.optimize.fsolve, args=[a, b, d])
 print(orbit)
 # %%
+t = 0.2
+x = [0.6, 0.6, 20]

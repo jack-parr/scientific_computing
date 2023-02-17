@@ -50,6 +50,7 @@ a = 1
 b = 0.2
 d = 0.1
 orbit = orbit_shoot(pred_prey, [0.6, 0.6, 20], scipy.optimize.fsolve, args=[a, b, d])
+print(orbit)
 
 x_sol, t_sol = myfunc.solve_to(pred_prey, 'rk4', [1, 1], 0, 100, 0.1, args=[a, b, d])
 x1_sol = [i[0] for i in x_sol]
@@ -65,3 +66,4 @@ plt.xlabel('X')
 plt.ylabel('Y')
 plt.title('Predator Prey Model')
 # This is the same orbit as is shown in the time series plot.
+# %%
