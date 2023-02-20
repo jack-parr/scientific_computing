@@ -2,7 +2,7 @@ import numpy as np
 import math
 
 
-def euler_step(func, x0, t0, delta_t, *args):
+def euler_step(func, x0, t0, delta_t, args):
     """
     Performs one iteration of the Euler method, with a timestep of 'delta_t'.
     ----------
@@ -23,13 +23,13 @@ def euler_step(func, x0, t0, delta_t, *args):
         (2) Float of the new time value after the timestep.
     """
 
-    grad = func(x0, t0, *args)
+    grad = func(x0, t0, args)
     t1 = t0 + delta_t
 
     return x0 + grad*delta_t, t1
 
 
-def rk4_step(func, x0, t0, delta_t, *args):
+def rk4_step(func, x0, t0, delta_t, args):
     """
     Performs one iteration of the 4th-Order Runge-Kutta method, with a timestep of 'delta_t'.
     ----------
@@ -50,7 +50,7 @@ def rk4_step(func, x0, t0, delta_t, *args):
         (2) Float of the new time value after the timestep.
     """
 
-    k1 = grad = func(x0, t0, *args)
+    k1 = grad = func(x0, t0, args)
     k2 = grad + (k1*delta_t)/2
     k3 = grad + (k2*delta_t)/2
     k4 = grad + (k3*delta_t)

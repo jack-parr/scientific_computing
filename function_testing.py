@@ -4,6 +4,7 @@ import scipy as sp
 import matplotlib.pyplot as plt
 import ode_solver as solve_ode
 import numerical_shooting as shooting
+import math
 
 #%%
 def hopf_func(x, t, args):
@@ -34,3 +35,7 @@ print(orbit)
 # %%
 t = 0.2
 x = [0.6, 0.6, 20]
+
+# %%
+test_solve = solve_ode.solve_to(pred_prey, 'rk4', [1.5, 1], 0, 10, 0.127, args=[1, 0.2, 0.1])
+print(len(test_solve))
