@@ -61,4 +61,7 @@ u_pred = np.linalg.solve(A, b)
 
 plt.plot(x_discrete, u_pred)
 # %%
-test = numerical_continuation()
+def func1(x, t, args):
+    D, mu = args
+    # turn it into first order form to create the func.
+# u_pred = numerical_continuation()
