@@ -2,7 +2,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import math
-import numerical_continuation
+#import numerical_continuation
 # %%
 N = 100
 x_min = -4
@@ -60,8 +60,3 @@ b[-1] = beta
 u_pred = np.linalg.solve(A, b)
 
 plt.plot(x_discrete, u_pred)
-# %%
-def func1(x, t, args):
-    D, mu = args
-    # turn it into first order form to create the func.
-# u_pred = numerical_continuation()
