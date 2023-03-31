@@ -20,13 +20,16 @@ def solve_heat(method, boundary_type, D, x_max, t_max, nx, nt):
         if C > 0.5:
             raise Exception('Stability condition not met.')
     
-    # INIT BASED ON BOUNDARY COND
-    if boundary_type == 'dirichlet':
-        size = nx-1
-
     x_arr = np.linspace(x_min, x_max, nx+1)
     t_arr = np.linspace(t_min, t_max, nt+1)
-    u_t = initial(x_arr[1:nx], 0, x_min, x_max)
+    
+    if boundary_type == 'dirichlet':
+        size = nx-1
+        u_t = initial(x_arr[1:nx], 0, x_min, x_max)
+
+    if boundary_type == 'neumann':
+        size = nx+1
+        u_t = initial(x_arr, 0, x_min, x_max)
 
     # CREATE MATRICES
     I_mat = sp.sparse.identity(size, format='csr')
@@ -56,7 +59,8 @@ def solve_heat(method, boundary_type, D, x_max, t_max, nx, nt):
             u_t = sp.sparse.linalg.spsolve(I_mat - ((C/2)*A_mat), (I_mat + ((C/2)*A_mat))@u_t + (C*b))
 
     # MOD u_t BASED ON BOUNDARY COND
-    u_t = np.concatenate((np.array([l_bound(x_min, 0)]), u_t, np.array([r_bound(x_max, 0)])))
+    if boundary_type == 'dirichlet':
+        u_t = np.concatenate((np.array([l_bound(x_min, 0)]), u_t, np.array([r_bound(x_max, 0)])))
 
     return u_t, x_arr
 # %%
