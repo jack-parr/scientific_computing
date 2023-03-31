@@ -34,29 +34,15 @@ def solve_heat(method, boundary_type, D, x_max, t_max, nx, nt):
     t_arr = np.linspace(t_min, t_max, nt+1)
     u_t = initial(x_arr[1:nx], 0, x_min, x_max)
 
-    # CREATE MATRICES BASED ON METHOD
-    if method == 'explicit_euler':
-        I_mat = np.identity(size)
-        A_mat = make_A(size, -2, 1)
-        
-        def make_b(t):
-            b = np.zeros(size)
-            b[0] = l_bound(x_min, t)
-            b[-1] = r_bound(x_max, t)
-            return b
+    # CREATE MATRICES
+    I_mat = np.identity(size)
+    A_mat = make_A(size, -2, 1)
     
-    if method == 'implicit_euler':
-        I_mat = np.identity(size)
-        A_mat = make_A(size, -2, 1)
-
-        def make_b(t):
-            b = np.zeros(size)
-            b[0] = l_bound(x_min, t)
-            b[-1] = r_bound(x_max, t)
-            return b
-    
-    if method == 'crank_nicolson':
-        print(1)
+    def make_b(t):
+        b = np.zeros(size)
+        b[0] = l_bound(x_min, t)
+        b[-1] = r_bound(x_max, t)
+        return b
     
     # MOD MATRICES BASED ON BOUNDARY COND
 
@@ -71,7 +57,9 @@ def solve_heat(method, boundary_type, D, x_max, t_max, nx, nt):
             u_t = np.linalg.solve(I_mat - (C*A_mat), u_t + (C*b))
     
     if method == 'crank_nicolson':
-        print(1)
+        for j in range(0, nt):
+            b = make_b(t_arr[j])
+            u_t = np.linalg.solve(I_mat - ((C/2)*A_mat), (I_mat + ((C/2)*A_mat))@u_t + (C*b))
 
     # MOD u_t BASED ON BOUNDARY COND
     u_t = np.concatenate((np.array([l_bound(x_min, 0)]), u_t, np.array([r_bound(x_max, 0)])))
@@ -97,7 +85,7 @@ def initial(x, t, x_min, x_max):
     y = np.sin((math.pi * x) / (x_max - x_min))
     return y
 
-u_t, x_arr = solve_heat('explicit_euler', 'dirichlet', D, x_max, t_max, nx, nt)
+u_t, x_arr = solve_heat('crank_nicolson', 'dirichlet', D, x_max, t_max, nx, nt)
 
 # %%
 dx = (x_max - x_min) / nx
