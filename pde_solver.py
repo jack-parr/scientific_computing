@@ -4,17 +4,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 import math
 # %%
-def make_A(size, dm, ds):
-    A = np.zeros((size, size))
-    A[0, 0] = dm
-    A[0, 1] = ds
-    A[size-1, size-2] = ds
-    A[size-1, size-1] = dm
-    for i in range(1, size-1):
-        A[i, i-1] = ds
-        A[i, i] = dm
-        A[i, i+1] = ds
-    return A
+def sparse_A(size, dm, ds):
+    data = np.concatenate((dm*np.ones(size), ds*np.ones(2*(size-1))))
+    row_idx = np.concatenate((np.arange(0, size), np.arange(0, size-1), np.arange(1, size)))
+    col_idx = np.concatenate((np.arange(0, size), np.arange(1, size), np.arange(0, size-1)))
+    return sp.sparse.csr_matrix((data, (row_idx, col_idx)), shape=(size,size))
 
 
 def solve_heat(method, boundary_type, D, x_max, t_max, nx, nt):
@@ -35,8 +29,8 @@ def solve_heat(method, boundary_type, D, x_max, t_max, nx, nt):
     u_t = initial(x_arr[1:nx], 0, x_min, x_max)
 
     # CREATE MATRICES
-    I_mat = np.identity(size)
-    A_mat = make_A(size, -2, 1)
+    I_mat = sp.sparse.identity(size, format='csr')
+    A_mat = sparse_A(size, -2, 1)
     
     def make_b(t):
         b = np.zeros(size)
@@ -49,24 +43,24 @@ def solve_heat(method, boundary_type, D, x_max, t_max, nx, nt):
     if method == 'explicit_euler':
         for j in range(0, nt):
             b = make_b(t_arr[j])
-            u_t += np.linalg.solve(I_mat, C*(A_mat@u_t + b))
+            u_t += sp.sparse.linalg.spsolve(I_mat, C*(A_mat@u_t + b))
     
     if method == 'implicit_euler':
         for j in range(0, nt):
             b = make_b(t_arr[j])
-            u_t = np.linalg.solve(I_mat - (C*A_mat), u_t + (C*b))
+            u_t = sp.sparse.linalg.spsolve(I_mat - (C*A_mat), u_t + (C*b))
     
     if method == 'crank_nicolson':
         for j in range(0, nt):
             b = make_b(t_arr[j])
-            u_t = np.linalg.solve(I_mat - ((C/2)*A_mat), (I_mat + ((C/2)*A_mat))@u_t + (C*b))
+            u_t = sp.sparse.linalg.spsolve(I_mat - ((C/2)*A_mat), (I_mat + ((C/2)*A_mat))@u_t + (C*b))
 
     # MOD u_t BASED ON BOUNDARY COND
     u_t = np.concatenate((np.array([l_bound(x_min, 0)]), u_t, np.array([r_bound(x_max, 0)])))
 
     return u_t, x_arr
 # %%
-# paramters
+# parameters
 D = 1
 x_min = 0
 x_max = 5
@@ -86,6 +80,13 @@ def initial(x, t, x_min, x_max):
     return y
 
 u_t, x_arr = solve_heat('crank_nicolson', 'dirichlet', D, x_max, t_max, nx, nt)
+
+def heat_exact(x, t, D, x_min, x_max):
+    L = x_max - x_min
+    return np.exp(-D * t * (math.pi**2 / L**2)) * np.sin((math.pi * (x - x_min)) / (L))
+
+heat_true = heat_exact(x_arr, t_max, D, x_min, x_max)
+plt.plot(x_arr, heat_true, x_arr, u_t)
 
 # %%
 dx = (x_max - x_min) / nx
