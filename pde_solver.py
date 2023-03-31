@@ -55,17 +55,23 @@ def solve_heat(method, boundary_type, D, x_max, t_max, nx, nt):
             b[-1] = r_bound(x_max, t)
             return b
     
+    if method == 'crank_nicolson':
+        print(1)
+    
     # MOD MATRICES BASED ON BOUNDARY COND
 
     if method == 'explicit_euler':
         for j in range(0, nt):
             b = make_b(t_arr[j])
-            u_t = u_t + np.linalg.solve(I_mat, C*(A_mat@u_t + b))
+            u_t += np.linalg.solve(I_mat, C*(A_mat@u_t + b))
     
     if method == 'implicit_euler':
         for j in range(0, nt):
             b = make_b(t_arr[j])
             u_t = np.linalg.solve(I_mat - (C*A_mat), u_t + (C*b))
+    
+    if method == 'crank_nicolson':
+        print(1)
 
     # MOD u_t BASED ON BOUNDARY COND
     u_t = np.concatenate((np.array([l_bound(x_min, 0)]), u_t, np.array([r_bound(x_max, 0)])))
