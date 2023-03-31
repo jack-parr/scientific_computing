@@ -35,13 +35,31 @@ def solve_heat(method, boundary_type, D, x_max, t_max, nx, nt):
     I_mat = sp.sparse.identity(size, format='csr')
     A_mat = sparse_A(size, -2, 1)
     
-    def make_b(t):
-        b = np.zeros(size)
-        b[0] = l_bound(x_min, t)
-        b[-1] = r_bound(x_max, t)
-        return b
+    if boundary_type == 'dirichlet':
+        def make_b(t):
+            b = np.zeros(size)
+            b[0] = l_bound(x_min, t)
+            b[-1] = r_bound(x_max, t)
+            return b
     
-    # MOD MATRICES BASED ON BOUNDARY COND
+    if boundary_type == 'neumann':
+        A_mat[size-1, size-2] *= 2
+        def make_b(t):
+            b = np.zeros(size)
+            b[0] = l_bound(x_min, t)
+            b[-1] = r_bound(x_max, t) * 2 * dx
+            return b
+    
+    # NEED TO REVIEW THIS
+    if boundary_type == 'robin':
+        A_mat[size-1, size-2] *= 2
+        A_mat[size-1, size-1] *= 1+(r_bound(x_max,0)*dx)
+        def make_b(t):
+            b = np.zeros(size)
+            b[0] = l_bound(x_min, t)
+            b[-1] = r_bound(x_max, t) * 2 * dx
+            return b
+    
 
     if method == 'explicit_euler':
         for j in range(0, nt):
