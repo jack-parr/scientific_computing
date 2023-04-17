@@ -25,7 +25,7 @@ def sparse_A(size, dm, do):
     return sp.sparse.csr_matrix((data, (row_idx, col_idx)), shape=(size,size))
 
 
-def solve_diffusion(method, boundary_type, l_bound_func, r_bound_func, init_func, source_func, D, x_min, x_max, nx, t_min, t_max, nt):
+def solve_diffusion(method, boundary_type, l_bound_func, r_bound_func, init_func, D, x_min, x_max, nx, t_min, t_max, nt, source_func=None, l_bound_args=None, r_bound_args=None, init_args=None, source_args=None):
     """
     Solves the heat equation using the input method and boundary conditions.
     ----------
@@ -56,6 +56,14 @@ def solve_diffusion(method, boundary_type, l_bound_func, r_bound_func, init_func
         Maximum t value.
     nt : int
         Number of t values to solve across, affects step sized used for t.
+    l_bound_args : list
+        Additional arguments needed by l_bound_func.
+    r_bound_args : list
+        Additional arguments needed by r_bound_func.
+    init_args : list
+        Additional arguments needed by init_func.
+    source_args : list
+        Additional arguments needed by source_func.
     ----------
     Returns
         A numpy.array with a column of values for each solved parameter, and the final column being the x-values solved at.
@@ -72,7 +80,7 @@ def solve_diffusion(method, boundary_type, l_bound_func, r_bound_func, init_func
     
     # ADJUST SOURCE TERM
     if source_func == None:
-        def source_func(a, b, c, d):
+        def source_func(x, t, args):
             return 0
     
     # CONSTRUCT ARRAYS
@@ -81,11 +89,11 @@ def solve_diffusion(method, boundary_type, l_bound_func, r_bound_func, init_func
     
     if boundary_type == 'dirichlet':
         size = nx-1
-        u_t = init_func(x_arr[1:nx], 0, x_min, x_max)
+        u_t = init_func(x_arr[1:nx], 0, init_args)
 
     if boundary_type == 'neumann':
         size = nx+1
-        u_t = init_func(x_arr, 0, x_min, x_max)
+        u_t = init_func(x_arr, 0, init_args)
 
     # CREATE SPARSE MATRICES
     I_mat = sp.sparse.identity(size, format='csr')
@@ -95,26 +103,26 @@ def solve_diffusion(method, boundary_type, l_bound_func, r_bound_func, init_func
     if boundary_type == 'dirichlet':
         def make_b(t):
             b = np.zeros(size)
-            b[0] = l_bound_func(x_min, t)
-            b[-1] = r_bound_func(x_max, t)
-            return b + dt*source_func(x_arr[1:nx], t, None, None)
+            b[0] = l_bound_func(x_min, t, l_bound_args)
+            b[-1] = r_bound_func(x_max, t, r_bound_args)
+            return b + dt*source_func(x_arr[1:nx], t, source_args)
     
     if boundary_type == 'neumann':
         A_mat[size-1, size-2] *= 2
         def make_b(t):
             b = np.zeros(size)
-            b[0] = l_bound_func(x_min, t)
-            b[-1] = r_bound_func(x_max, t) * 2 * dx
-            return b + dt*source_func(x_arr, t, None, None)
+            b[0] = l_bound_func(x_min, t, l_bound_args)
+            b[-1] = r_bound_func(x_max, t, r_bound_args) * 2 * dx
+            return b + dt*source_func(x_arr, t, source_args)
     
     # NEED TO REVIEW THIS
     if boundary_type == 'robin':
         A_mat[size-1, size-2] *= 2
-        A_mat[size-1, size-1] *= 1+(r_bound_func(x_max,0)*dx)
+        A_mat[size-1, size-1] *= 1+(r_bound_func(x_max, 0, r_bound_args)*dx)
         def make_b(t):
             b = np.zeros(size)
-            b[0] = l_bound_func(x_min, t)
-            b[-1] = r_bound_func(x_max, t) * 2 * dx
+            b[0] = l_bound_func(x_min, t, l_bound_args)
+            b[-1] = r_bound_func(x_max, t, r_bound_args) * 2 * dx
             return b
     
     # SOLVE
@@ -135,6 +143,6 @@ def solve_diffusion(method, boundary_type, l_bound_func, r_bound_func, init_func
 
     # MODIFY u_t ACCORDING TO BOUNDARY CONDITIONS
     if boundary_type == 'dirichlet':
-        u_t = np.concatenate((np.array([l_bound_func(x_min, 0)]), u_t, np.array([r_bound_func(x_max, 0)])))
+        u_t = np.concatenate((np.array([l_bound_func(x_min, 0, l_bound_args)]), u_t, np.array([r_bound_func(x_max, 0, r_bound_args)])))
 
     return np.vstack([u_t, x_arr]).T
