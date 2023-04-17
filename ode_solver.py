@@ -100,4 +100,3 @@ def solve_to(func, method, x1, t1, t2, deltat_max, args):
         i += 1
 
     return x_sol[~np.isnan(x_sol).any(axis=1), :]
-

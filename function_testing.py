@@ -15,7 +15,7 @@ def hopf_func(x, t, args):
 
 # %%
 solve_test = solve_ode.solve_to(hopf_func, 'rk4', [1, 1, -1], 0, 10, 0.1, [1, -1])
-print(solve_test)
+print(solve_test[:,0])
 # %%
 def pred_prey(x, t, args):
     a, b, d = args
