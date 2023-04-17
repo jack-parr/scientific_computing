@@ -74,11 +74,12 @@ plt.plot(output[:,1], heat_true, output[:,1], output[:,0])
 # SOURCE TERM TESTING
 D = 1
 x_min = 0
-x_max = 5
+x_max = 1
 t_min = 0
-t_max = 0.5
+t_max = 0.2
 nx = 100
 nt = 1000
+mu = 2
 
 def l_bound(x, t, args): # at x=x_min
     return 0
@@ -86,17 +87,34 @@ def l_bound(x, t, args): # at x=x_min
 def r_bound(x, t, args): # at x=x_max
     return 0
 
-def initial(x, t, args):
-    x_min, x_max = args
-    y = np.sin((math.pi * x) / (x_max - x_min))
-    return y
+def initial(x_arr, t, args):
+    return np.zeros(len(x_arr))
 
-output = solve_pde.solve_diffusion('crank_nicolson', 'dirichlet', l_bound, r_bound, initial, D, x_min, x_max, nx, t_min, t_max, nt, init_args=[x_min, x_max])
+def source(x_arr, t, u, args):
+    mu = args
+    return np.ones(shape=len(x_arr)) * (math.e**(u * mu))
 
-def heat_exact(x, t, D, x_min, x_max):
-    L = x_max - x_min
-    return np.exp(-D * t * (math.pi**2 / L**2)) * np.sin((math.pi * (x - x_min)) / (L))
+output = solve_pde.solve_diffusion('crank_nicolson', 'dirichlet', l_bound, r_bound, initial, D, x_min, x_max, nx, t_min, t_max, nt, source_func=source, source_args=[mu])
 
-heat_true = heat_exact(output[:,1], t_max, D, x_min, x_max)
-plt.plot(output[:,1], heat_true, output[:,1], output[:,0])
+#def bratu_exact(x, t, D, x_min, x_max):
+#    L = x_max - x_min
+#    return np.exp(-D * t * (math.pi**2 / L**2)) * np.sin((math.pi * (x - x_min)) / (L))
+
+#bratu_true = bratu_exact(output[:,1], t_max, D, x_min, x_max)
+#plt.plot(output[:,1], bratu_true, output[:,1], output[:,0])
+
+plt.plot(output[:,1], output[:,0])
 # %%
+x_arr = np.linspace(x_min, x_max, nx+1)
+test2 = source(x_arr[1:nx], 0, [0, 2])
+
+dt = (t_max - t_min) / nt
+size = nx-1
+def make_b(t):
+    b = np.zeros(size)
+    b[0] = 0
+    b[-1] = 0
+    return b + dt*source(x_arr[1:nx], t, (0, 2))
+    #return b
+
+testb = make_b(0)

@@ -40,8 +40,6 @@ def solve_diffusion(method, boundary_type, l_bound_func, r_bound_func, init_func
         Function that takes singular values (x, t) as inputs and returns the right boundary value.
     init_func : function
         Function that takes arrays (x, t) and singular values (x_min, x_max) as inputs and returns intitial solution array.
-    source_func : function
-        Function that takes singular values (x, t, u) and list (args) as inputs and returns source value. Use None if no source term is used.
     D : float OR int
         Diffusion Coefficient.
     x_min : float OR int
@@ -56,6 +54,8 @@ def solve_diffusion(method, boundary_type, l_bound_func, r_bound_func, init_func
         Maximum t value.
     nt : int
         Number of t values to solve across, affects step sized used for t.
+    source_func : function
+        Function that takes singular values (x, t) and list (args) as inputs and returns source value.
     l_bound_args : list
         Additional arguments needed by l_bound_func.
     r_bound_args : list
@@ -80,7 +80,7 @@ def solve_diffusion(method, boundary_type, l_bound_func, r_bound_func, init_func
     
     # ADJUST SOURCE TERM
     if source_func == None:
-        def source_func(x, t, args):
+        def source_func(x, t, u, args):
             return 0
     
     # CONSTRUCT ARRAYS
@@ -105,7 +105,7 @@ def solve_diffusion(method, boundary_type, l_bound_func, r_bound_func, init_func
             b = np.zeros(size)
             b[0] = l_bound_func(x_min, t, l_bound_args)
             b[-1] = r_bound_func(x_max, t, r_bound_args)
-            return b + dt*source_func(x_arr[1:nx], t, source_args)
+            return b + dt*source_func(x_arr[1:nx], t, u_t, source_args)
     
     if boundary_type == 'neumann':
         A_mat[size-1, size-2] *= 2
@@ -113,7 +113,7 @@ def solve_diffusion(method, boundary_type, l_bound_func, r_bound_func, init_func
             b = np.zeros(size)
             b[0] = l_bound_func(x_min, t, l_bound_args)
             b[-1] = r_bound_func(x_max, t, r_bound_args) * 2 * dx
-            return b + dt*source_func(x_arr, t, source_args)
+            return b + dt*source_func(x_arr, t, u_t, source_args)
     
     # NEED TO REVIEW THIS
     if boundary_type == 'robin':
