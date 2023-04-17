@@ -4,6 +4,7 @@ import scipy as sp
 import matplotlib.pyplot as plt
 import ode_solver as solve_ode
 import numerical_shooting as shooting
+import pde_solver as solve_pde
 import math
 
 #%%
@@ -39,3 +40,32 @@ x = [0.6, 0.6, 20]
 # %%
 test_solve = solve_ode.solve_to(pred_prey, 'rk4', [1.5, 1], 0, 10, 0.127, args=[1, 0.2, 0.1])
 print(len(test_solve))
+# %%
+# PDE SOLVER
+# parameters
+D = 1
+x_min = 0
+x_max = 5
+t_min = 0
+t_max = 0.5
+nx = 100
+nt = 1000
+
+def l_bound(x, t): # at x=x_min
+    return 0
+
+def r_bound(x, t): # at x=x_max
+    return 0
+
+def initial(x, t, x_min, x_max):
+    y = np.sin((math.pi * x) / (x_max - x_min))
+    return y
+
+output = solve_pde.solve_heat('crank_nicolson', 'dirichlet', l_bound, r_bound, initial, D, x_min, x_max, nx, t_min, t_max, nt)
+
+def heat_exact(x, t, D, x_min, x_max):
+    L = x_max - x_min
+    return np.exp(-D * t * (math.pi**2 / L**2)) * np.sin((math.pi * (x - x_min)) / (L))
+
+heat_true = heat_exact(output[:,1], t_max, D, x_min, x_max)
+plt.plot(output[:,1], heat_true, output[:,1], output[:,0])

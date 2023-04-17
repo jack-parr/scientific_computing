@@ -67,7 +67,7 @@ def solve_to(func, method, x1, t1, t2, deltat_max, args):
     func : function
         The ODE to solve. The ODE function should be in first-order form, take a single list input and return the right-hand side of the ODE as a numpy.array. 
     method : string
-        Either 'euler' for Euler method, or 'rk4' ofr 4th-Order Runge-Kutta method.
+        Either 'euler' for Euler method, or 'rk4' for 4th-Order Runge-Kutta method.
     x1 : list
         Initial values at 't1'.
     t1 : float OR int
