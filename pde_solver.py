@@ -25,7 +25,7 @@ def sparse_A(size, dm, do):
     return sp.sparse.csr_matrix((data, (row_idx, col_idx)), shape=(size,size))
 
 
-def solve_diffusion(method, boundary_type, l_bound_func, r_bound_func, init_func, D, x_min, x_max, nx, t_min, t_max, nt):
+def solve_diffusion(method, boundary_type, l_bound_func, r_bound_func, init_func, source_func, D, x_min, x_max, nx, t_min, t_max, nt):
     """
     Solves the heat equation using the input method and boundary conditions.
     ----------
@@ -40,6 +40,8 @@ def solve_diffusion(method, boundary_type, l_bound_func, r_bound_func, init_func
         Function that takes singular values (x, t) as inputs and returns the right boundary value.
     init_func : function
         Function that takes arrays (x, t) and singular values (x_min, x_max) as inputs and returns intitial solution array.
+    source_func : function
+        Function that takes singular values (x, t, u) and list (args) as inputs and returns source value. Use None if no source term is used.
     D : float OR int
         Diffusion Coefficient.
     x_min : float OR int
@@ -68,6 +70,11 @@ def solve_diffusion(method, boundary_type, l_bound_func, r_bound_func, init_func
         if C > 0.5:
             raise Exception('Stability condition not met.')
     
+    # ADJUST SOURCE TERM
+    if source_func == None:
+        def source_func(a, b, c, d):
+            return 0
+    
     # CONSTRUCT ARRAYS
     x_arr = np.linspace(x_min, x_max, nx+1)
     t_arr = np.linspace(t_min, t_max, nt+1)
@@ -90,7 +97,7 @@ def solve_diffusion(method, boundary_type, l_bound_func, r_bound_func, init_func
             b = np.zeros(size)
             b[0] = l_bound_func(x_min, t)
             b[-1] = r_bound_func(x_max, t)
-            return b
+            return b + dt*source_func(x_arr[1:nx], t, None, None)
     
     if boundary_type == 'neumann':
         A_mat[size-1, size-2] *= 2
@@ -98,7 +105,7 @@ def solve_diffusion(method, boundary_type, l_bound_func, r_bound_func, init_func
             b = np.zeros(size)
             b[0] = l_bound_func(x_min, t)
             b[-1] = r_bound_func(x_max, t) * 2 * dx
-            return b
+            return b + dt*source_func(x_arr, t, None, None)
     
     # NEED TO REVIEW THIS
     if boundary_type == 'robin':
