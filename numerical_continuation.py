@@ -32,19 +32,19 @@ def natural_cont(func, x0, vary_par_idx, max_par, num_steps, discretisation, sol
     pars = np.linspace(init_args[vary_par_idx], max_par, num_steps)
 
     for par in pars:
-        # args0[vary_par_idx] = par
-        # if pc:
-        #     args_all = (pc, args0)
-        # else:
-        #     args_all = args0
         init_args[vary_par_idx] = par
-        root = solver(discretisation(func), x0, args=(phase_con, init_args, phase_args))
+        if phase_con:
+            args_all = (phase_con, init_args, phase_args)
+        else:
+            args_all = init_args
+        
+        root = solver(discretisation(func), x0, args=(args_all))
         u_stor.append(root)
         x0 = root
 
     return np.array([u_stor, pars])
 # %%
-def func1(x, t, args):
+def func1(x, args):
     c = args[0]
     return x**3 - x + c
 
@@ -57,7 +57,6 @@ test_nat = natural_cont(
     max_par=2,
     num_steps=400,
     discretisation=(lambda x: x),
-    #discretisation=shooting_problem,
     solver=sp.optimize.fsolve,
     init_args=[c]
 )
