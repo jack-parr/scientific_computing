@@ -57,16 +57,16 @@ def solve_diffusion(method, boundary_type, l_bound_func, r_bound_func, init_func
     source_func : function
         Function that takes singular values (x, t) and list (args) as inputs and returns source value.
     l_bound_args : list
-        Additional arguments needed by l_bound_func.
+        Additional arguments needed by 'l_bound_func'.
     r_bound_args : list
-        Additional arguments needed by r_bound_func.
+        Additional arguments needed by 'r_bound_func'.
     init_args : list
-        Additional arguments needed by init_func.
+        Additional arguments needed by 'init_func'.
     source_args : list
-        Additional arguments needed by source_func.
+        Additional arguments needed by 'source_func'.
     ----------
     Returns
-        A numpy.array with a column of values for each solved parameter, and the final column being the x-values solved at.
+        A numpy.array with a row of values for each solved parameter, and the final row being the x-values solved at.
     """
 
     # CHECK STABILITY CONDITION
@@ -145,4 +145,4 @@ def solve_diffusion(method, boundary_type, l_bound_func, r_bound_func, init_func
     if boundary_type == 'dirichlet':
         u_t = np.concatenate((np.array([l_bound_func(x_min, 0, l_bound_args)]), u_t, np.array([r_bound_func(x_max, 0, r_bound_args)])))
 
-    return np.vstack([u_t, x_arr]).T
+    return np.vstack([u_t, x_arr])

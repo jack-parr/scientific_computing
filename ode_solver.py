@@ -16,7 +16,7 @@ def euler_step(func, x0, t0, delta_t, args):
     delta_t : float OR int
         The timestep to be solved to.
     args : list
-        Additional parameters needed by func.
+        Additional parameters needed by 'func'.
     ----------
     Returns
         (1) List values of the function solved after the timestep.
@@ -43,7 +43,7 @@ def rk4_step(func, x0, t0, delta_t, args):
     delta_t : float OR int
         The timestep to be solved to.
     args : list
-        Additional parameters needed by func.
+        Additional parameters needed by 'func'.
     ----------
     Returns
         (1) List values of the function solved after the timestep.
@@ -77,10 +77,10 @@ def solve_to(func, method, x1, t1, t2, deltat_max, args):
     deltat_max : float OR int
         Maximum allowed timestep.
     args : list
-        Additional parameters needed by func.
+        Additional parameters needed by 'func'.
     ----------
     Returns
-        A numpy.array with a column of values for each solved parameter, and the final column being the timesteps solved at.
+        A numpy.array with a row of values for each solved parameter, and the final row being the timesteps solved at.
     """
 
     if method == 'euler':
@@ -99,4 +99,4 @@ def solve_to(func, method, x1, t1, t2, deltat_max, args):
         x_sol[i][-1] = t1
         i += 1
 
-    return x_sol[~np.isnan(x_sol).any(axis=1), :]
+    return x_sol[~np.isnan(x_sol).any(axis=1), :].T

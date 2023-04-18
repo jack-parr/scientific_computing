@@ -39,7 +39,7 @@ x = [0.6, 0.6, 20]
 
 # %%
 test_solve = solve_ode.solve_to(pred_prey, 'rk4', [1.5, 1], 0, 10, 0.127, args=[1, 0.2, 0.1])
-print(len(test_solve))
+plt.plot(test_solve[2], test_solve[0])
 # %%
 # PDE SOLVER
 # parameters
@@ -68,8 +68,9 @@ def heat_exact(x, t, D, x_min, x_max):
     L = x_max - x_min
     return np.exp(-D * t * (math.pi**2 / L**2)) * np.sin((math.pi * (x - x_min)) / (L))
 
-heat_true = heat_exact(output[:,1], t_max, D, x_min, x_max)
-plt.plot(output[:,1], heat_true, output[:,1], output[:,0])
+heat_true = heat_exact(output[1], t_max, D, x_min, x_max)
+#plt.plot(output[:,1], heat_true, output[:,1], output[:,0])
+plt.plot(output[1], heat_true, output[1], output[0])
 # %%
 # SOURCE TERM TESTING
 D = 1

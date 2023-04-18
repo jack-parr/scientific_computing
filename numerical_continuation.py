@@ -10,22 +10,20 @@ def func1(x, args):
     c = args[0]
     return x**3 - x + c
 
-# %%
-
 c_all = np.linspace(-2, 2, 100)
 r_stor = []
 
-root = sp.optimize.fsolve(func1, x0=5, args=(-2))
+root = sp.optimize.fsolve(func1, x0=5, args=[-2])
 r_stor.append(root)
 for c in c_all[1:]:
-    root = sp.optimize.fsolve(func1, x0=root, args=(c))
+    root = sp.optimize.fsolve(func1, x0=root, args=[c])
     r_stor.append(root)
-# %%
+
 plt.plot(c_all, r_stor)
 
 # %%
 x = np.linspace(-2, 2, 100)
-y = func1(x, 0)
+y = func1(x, [0])
 plt.plot(x, y)
 plt.grid()
 # %%
@@ -130,6 +128,8 @@ test_nat = natural_cont(
     pc=None,
     solver=sp.optimize.fsolve
 )
+
+#plt.plot(test_pseudo, test_pseudo1)
 # %%
 c = -2
 
