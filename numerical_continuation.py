@@ -27,22 +27,43 @@ y = func1(x, [0])
 plt.plot(x, y)
 plt.grid()
 # %%
-def natural_cont(func, x0, args0, vary_par_idx, max_par, num_steps, discretisation, pc, solver):
-    r_stor = []
-    pars = np.linspace(args0[vary_par_idx], max_par, num_steps)
+def natural_cont(func, x0, vary_par_idx, max_par, num_steps, discretisation, solver, phase_con=None, phase_args=None, init_args=None):
+    u_stor = []
+    pars = np.linspace(init_args[vary_par_idx], max_par, num_steps)
 
     for par in pars:
-        args0[vary_par_idx] = par
-        if pc:
-            args_all = (pc, args0)
-        else:
-            args_all = args0
-
-        root = solver(discretisation(func), x0, args=args_all)
-        r_stor.append(root)
+        # args0[vary_par_idx] = par
+        # if pc:
+        #     args_all = (pc, args0)
+        # else:
+        #     args_all = args0
+        init_args[vary_par_idx] = par
+        root = solver(discretisation(func), x0, args=(phase_con, init_args, phase_args))
+        u_stor.append(root)
         x0 = root
 
-    return np.array([pars, r_stor])
+    return np.array([u_stor, pars])
+# %%
+def func1(x, t, args):
+    c = args[0]
+    return x**3 - x + c
+
+c = -2
+
+test_nat = natural_cont(
+    func=func1,
+    x0=5,
+    vary_par_idx=0,
+    max_par=2,
+    num_steps=400,
+    discretisation=(lambda x: x),
+    #discretisation=shooting_problem,
+    solver=sp.optimize.fsolve,
+    init_args=[c]
+)
+
+plt.plot(test_nat[-1], test_nat[0])
+# %%
 
 
 def pseudo_arclength(func, x0, args0, vary_par_idx, max_par, num_steps, discretisation, pc, solver):
@@ -114,22 +135,6 @@ def pseudo_arclength(func, x0, args0, vary_par_idx, max_par, num_steps, discreti
 
     return r_stor, par_stor
 
-# %%
-c = -2
-
-test_nat = natural_cont(
-    func=func1,
-    x0=5,
-    args0=[c],
-    vary_par_idx=0,
-    max_par=2,
-    num_steps=400,
-    discretisation=(lambda x: x),
-    pc=None,
-    solver=sp.optimize.fsolve
-)
-
-#plt.plot(test_pseudo, test_pseudo1)
 # %%
 c = -2
 

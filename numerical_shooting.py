@@ -1,8 +1,8 @@
 import numpy as np
 import ode_solver as solve_ode
+# , phase_con, func_args, phase_args
 
-
-def shooting_problem(func, phase_con, func_args, phase_args):
+def shooting_problem(func):
     """
     Constructs the function to be used for finding periodic orbits by numerical shooting.
     ----------
@@ -39,13 +39,18 @@ def shooting_problem(func, phase_con, func_args, phase_args):
         """
 
         T = x0[-1]
-        x1 = x0[:-1]
-        x_sol = solve_ode.solve_to(func, 'rk4', x1, 0, T, 0.01, func_args)
+        x_in = x0[:-1]
+        x_sol = solve_ode.solve_to(func, 'rk4', x_in, 0, T, 0.01, func_args)
+        
+        # EXTRACTING FINAL COORDINATE VALUES
+        x_out = []
+        for i in range(len(x_in)):
+            x_out.append(x_sol[i][-1])
 
         if phase_con != None:
-            return np.append(x1 - x_sol[-1][:-1], phase_con(x1, phase_args))
+            return np.append(x_in - x_out, phase_con(x_in, phase_args))
         else:
-            return x1 - x_sol[-1][:-1]
+            return x_in - x_out
     
     return G
 
@@ -72,7 +77,7 @@ def orbit_shoot(func, x0, solver, phase_con=None, func_args=None, phase_args=Non
         A numpy.array with initial values where a periodic orbit exists, with the final value being the time period of this orbit. If the numerical root finder failed, the returned array is empty.
     """
 
-    G = shooting_problem(func, phase_con, func_args, phase_args)
+    G = shooting_problem(func)
     orbit = solver(G, x0, (phase_con, func_args, phase_args))
 
     return orbit
