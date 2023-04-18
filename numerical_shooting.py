@@ -1,6 +1,5 @@
 import numpy as np
 import ode_solver as solve_ode
-# , phase_con, func_args, phase_args
 
 def shooting_problem(func):
     """
@@ -9,12 +8,6 @@ def shooting_problem(func):
     Parameters
     func : function
         The ODE to solve. The ODE function should be in first-order form, take a single list input and return the right-hand side of the ODE as a numpy.array.
-    phase_con : function
-        Returns the phase condition of the shooting problem.
-    func_args : list
-        Additional parameters needed by 'func'.
-    phase_args : list
-        Additional parameters needed by 'phase_con'.
     ----------
     Returns
         A function, where the roots of its output are the initial values of a periodic orbit.
