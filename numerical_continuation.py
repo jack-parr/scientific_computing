@@ -27,23 +27,23 @@ y = func1(x, [0])
 plt.plot(x, y)
 plt.grid()
 # %%
-def natural_cont(func, x0, vary_par_idx, max_par, num_steps, discretisation, solver, phase_con=None, phase_args=None, init_args=None):
+def natural_cont(func, x0, vary_par_idx, max_par, num_steps, discretisation, solver=sp.optimize.fsolve, init_args=None):
     u_stor = []
     pars = np.linspace(init_args[vary_par_idx], max_par, num_steps)
 
     for par in pars:
         init_args[vary_par_idx] = par
-        if phase_con:
-            args_all = (phase_con, init_args, phase_args)
-        else:
-            args_all = init_args
-        
-        root = solver(discretisation(func), x0, args=(args_all))
+        root = solver(discretisation(func), x0, args=init_args)
         u_stor.append(root)
         x0 = root
 
     return np.array([u_stor, pars])
 # %%
+# WITH DISCRETISATION
+def hopf_normal():
+    return 1
+# %%
+# NO DISCRETISATION
 def func1(x, args):
     c = args[0]
     return x**3 - x + c
