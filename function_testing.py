@@ -31,7 +31,7 @@ def pp_pc(x, args):
 a = 1
 b = 0.2
 d = 0.1
-orbit = shooting.orbit_shoot(pred_prey, [0.6, 0.6, 20], pp_pc, sp.optimize.fsolve, args=[a, b, d])
+orbit = shooting.orbit_shoot(pred_prey, [0.6, 0.6, 20], sp.optimize.fsolve, pp_pc, func_args=[a, b, d], phase_args=[a, b, d])
 print(orbit)
 # %%
 t = 0.2
