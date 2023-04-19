@@ -1,5 +1,6 @@
 import scipy as sp
 import numpy as np
+import input_checks
 
 
 def sparse_A(size, dm, do):
@@ -56,18 +57,46 @@ def solve_diffusion(method, boundary_type, l_bound_func, r_bound_func, init_func
         Number of t values to solve across, affects step sized used for t.
     source_func : function
         Function that takes singular values (x, t) and list (args) as inputs and returns source value.
-    l_bound_args : list
+    l_bound_args : list OR numpy.ndarray
         Additional arguments needed by 'l_bound_func'.
-    r_bound_args : list
+    r_bound_args : list OR numpy.ndarray
         Additional arguments needed by 'r_bound_func'.
-    init_args : list
+    init_args : list OR numpy.ndarray
         Additional arguments needed by 'init_func'.
-    source_args : list
+    source_args : list OR numpy.ndarray
         Additional arguments needed by 'source_func'.
     ----------
     Returns
         A numpy.array with a row of values for each solved parameter, and the final row being the x-values solved at.
     """
+
+    # INPUT CHECKS
+    input_checks.test_string(method, 'method')
+    if method not in ['explicit_euler', 'implicit_euler', 'crank_nicolson']:
+        raise Exception('Argument (method) must be either \'explicit_euler\', \'implicit_euler\', or \'crank_nicolson\'.')
+    input_checks.test_string(boundary_type, 'boundary_type')
+    if boundary_type not in ['dirichlet', 'neumann', 'robin']:
+        raise Exception('Argument (boundary_type) must be either \'dirichlet\', \'neumann\', or \'robin\'.')
+    input_checks.test_function(l_bound_func, 'l_bound_func')
+    input_checks.test_function(r_bound_func, 'r_bound_func')
+    input_checks.test_function(init_func, 'init_func')
+    input_checks.test_float_int(D, 'D')
+    input_checks.test_float_int(x_min, 'x_min')
+    input_checks.test_float_int(x_max, 'x_max')
+    input_checks.test_int(nx, 'nx')
+    input_checks.test_float_int(t_min, 't_min')
+    input_checks.test_float_int(t_max, 't_max')
+    input_checks.test_int(nt, 'nt')
+    if source_func != None:
+        input_checks.test_function(source_func, 'source_func')
+    if l_bound_args != None:
+        input_checks.test_list_nparray(l_bound_args, 'l_bound_args')
+    if r_bound_args != None:
+        input_checks.test_list_nparray(r_bound_args, 'r_bound_args')
+    if init_args != None:
+        input_checks.test_list_nparray(init_args, 'init_args')
+    if source_args != None:
+        input_checks.test_list_nparray(source_args, 'source_args')
 
     # CHECK STABILITY CONDITION
     dx = (x_max - x_min) / nx

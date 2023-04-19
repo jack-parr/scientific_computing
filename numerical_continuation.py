@@ -1,5 +1,6 @@
 import numpy as np
 import scipy as sp
+import input_checks
 
 def natural_continuation(func, x0, init_args, vary_par_idx, max_par, num_steps, discretisation=(lambda x: x), solver=sp.optimize.fsolve):
     """
@@ -8,9 +9,9 @@ def natural_continuation(func, x0, init_args, vary_par_idx, max_par, num_steps, 
     Parameters
     func : function
         The function to be solved.
-    x0 : list
+    x0 : list OR numpy.ndarray
         Initial coordinates and phase condition if relevant.
-    init_args : list
+    init_args : list OR numpy.ndarray
         Initial args to be used by 'func'.
     vary_par_idx : int
         Index of parameter to be varied within 'init_args'.
@@ -26,6 +27,16 @@ def natural_continuation(func, x0, init_args, vary_par_idx, max_par, num_steps, 
     Returns
         A numpy.array with a row of values for each solved coordinate, and the final row being the varied parameter values solved at.
     """
+
+    # INPUT CHECKS
+    input_checks.test_function(func, 'func')
+    input_checks.test_list_nparray(x0, 'x0')
+    input_checks.test_list_nparray(init_args, 'init_args')
+    input_checks.test_int(vary_par_idx, 'vary_par_idx')
+    input_checks.test_float_int(max_par, 'max_par')
+    input_checks.test_int(num_steps, 'num_steps')
+    input_checks.test_function(discretisation, 'discretisation')
+    input_checks.test_function(solver, 'solver')
 
     u_stor = []
     pars = np.linspace(init_args[vary_par_idx], max_par, num_steps)
@@ -46,9 +57,9 @@ def pseudo_arclength(func, x0, init_args, vary_par_idx, max_par, num_steps, disc
     Parameters
     func : function
         The function to be solved.
-    x0 : list
+    x0 : list OR numpy.ndarray
         Initial coordinates and phase condition if relevant.
-    init_args : list
+    init_args : list OR numpy.ndarray
         Initial args to be used by 'func'.
     vary_par_idx : int
         Index of parameter to be varied within 'init_args'.
@@ -66,6 +77,18 @@ def pseudo_arclength(func, x0, init_args, vary_par_idx, max_par, num_steps, disc
     Returns
         A numpy.array with a row of values for each solved coordinate and phase condition if relevant, and the final row being the varied parameter values solved at.
     """
+
+    # INPUT CHECKS
+    input_checks.test_function(func, 'func')
+    input_checks.test_list_nparray(x0, 'x0')
+    input_checks.test_list_nparray(init_args, 'init_args')
+    input_checks.test_int(vary_par_idx, 'vary_par_idx')
+    input_checks.test_float_int(max_par, 'max_par')
+    input_checks.test_int(num_steps, 'num_steps')
+    input_checks.test_function(discretisation, 'discretisation')
+    input_checks.test_function(solver, 'solver')
+    if phase_con != None:
+        input_checks.test_function(phase_con, 'phase_con')
 
     def make_args(phase_con, init_args, vary_par_idx, new_par):
         init_args[vary_par_idx] = new_par

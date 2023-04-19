@@ -24,7 +24,7 @@ def test_list_nparray(arg, arg_name):
 
 
 def test_function(arg, arg_name):
-    if callable(arg):
+    if callable(arg) and type(arg) is not type:
         pass
     else:
         raise Exception('Argument ('+arg_name+') must be a callable function.')
