@@ -100,8 +100,8 @@ def hopf_func(x, t, args):
     dxdt = np.array([((b*x1) - x2 + (s*x1*(x1**2 + x2**2))), (x1 + (b*x2) + (s*x2*(x1**2 + x2**2))), -x3])
     return dxdt
 
-# %%
-solve_test = solve_ode.solve_to(hopf_func, 'rk4', [1, 1, -1], 0, 10, 0.1, [1, -1])
+solve_test = solve_ode.solve_to(hopf_func, 'rk4', np.array([1, 1, -1]), 0, 10, 0.1, [1, -1])
+plt.plot(solve_test[-1], solve_test[0])
 # %%
 def pred_prey(x, t, args):
     a, b, d = args
