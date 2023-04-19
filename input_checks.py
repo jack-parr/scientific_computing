@@ -3,7 +3,7 @@ import numpy as np
 
 
 def test_float_int(arg, arg_name):
-    if type(arg) is int or type(arg) is float:
+    if type(arg) is int or type(arg) is float or type(arg) is np.float64:
         pass
     else:
         raise Exception('Argument ('+arg_name+') must be either a float or integer value.')

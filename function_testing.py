@@ -34,9 +34,9 @@ plt.grid()
 # NO DISCRETISATION
 c = -2
 
-test_nat = num_con.natural_cont(
+test_nat = num_con.natural_continuation(
     func=func1,
-    x0=5,
+    x0=[5],
     init_args=[c],
     vary_par_idx=0,
     max_par=2,
@@ -56,7 +56,7 @@ c = -2
 
 test1 = num_con.pseudo_arclength(
     func=func1,
-    x0=5,
+    x0=[5],
     init_args=[c],
     vary_par_idx=0,
     max_par=2,
@@ -189,18 +189,4 @@ output = solve_pde.solve_diffusion('crank_nicolson', 'dirichlet', l_bound, r_bou
 #bratu_true = bratu_exact(output[:,1], t_max, D, x_min, x_max)
 #plt.plot(output[:,1], bratu_true, output[:,1], output[:,0])
 
-plt.plot(output[:,1], output[:,0])
-# %%
-x_arr = np.linspace(x_min, x_max, nx+1)
-test2 = source(x_arr[1:nx], 0, [0, 2])
-
-dt = (t_max - t_min) / nt
-size = nx-1
-def make_b(t):
-    b = np.zeros(size)
-    b[0] = 0
-    b[-1] = 0
-    return b + dt*source(x_arr[1:nx], t, (0, 2))
-    #return b
-
-testb = make_b(0)
+plt.plot(output[-1], output[0])

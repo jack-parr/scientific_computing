@@ -11,41 +11,41 @@ def pred_prey(x, t, args):
     return dxdt
 
 # %%
-class TestMethods(unittest.TestCase):
-
-    def testEulerStep(self):
+class test_methods_solve_ode(unittest.TestCase):
+    
+    def test_euler_step(self):
         x0 = [1.5, 1]
         t0 = 0
         delta_t = 1
-        x_pred, t = solve_ode.euler_step(pred_prey, x0, t0, delta_t, args=[1, 0.2, 0.1])
-        self.assertEqual(len(x_pred), 2)
+        x_pred = solve_ode.euler_step(pred_prey, x0, t0, delta_t, args=[1, 0.2, 0.1])
+        self.assertEqual(np.size(x_pred), 3)
         self.assertEqual(round(x_pred[0], 3), -0.188)
         self.assertEqual(round(x_pred[1], 3), 1.067)
-        self.assertEqual(int(t), 1)
+        self.assertEqual(int(x_pred[2]), 1)
     
 
-    def testRK4Step(self):
+    def test_rk4_step(self):
         x0 = [1.5, 1]
         t0 = 0
         delta_t = 1
-        x_pred, t = solve_ode.rk4_step(pred_prey, x0, t0, delta_t, args=[1, 0.2, 0.1])
-        self.assertEqual(len(x_pred), 2)
+        x_pred = solve_ode.rk4_step(pred_prey, x0, t0, delta_t, args=[1, 0.2, 0.1])
+        self.assertEqual(np.size(x_pred), 3)
         self.assertEqual(round(x_pred[0], 3), -1.383)
         self.assertEqual(round(x_pred[1], 3), 1.114)
-        self.assertEqual(int(t), 1)
+        self.assertEqual(int(x_pred[2]), 1)
     
 
-    def testSolveTo(self):
+    def test_solve_to(self):
         x1 = [1.5, 1]
         t1 = 0
         t2 = 10
         for method in ['euler', 'rk4']:
             x_pred = solve_ode.solve_to(pred_prey, method, x1, t1, t2, 0.127, args=[1, 0.2, 0.1])
-            self.assertEqual(len(x_pred), 80)
+            self.assertEqual(np.size(x_pred), (3,80))
             self.assertTrue(np.isclose(x_pred[-1][-1], 10))
 
             x_pred = solve_ode.solve_to(pred_prey, 'rk4', x1, t1, t2, 0.01, args=[1, 0.2, 0.1])
-            self.assertEqual(len(x_pred), 1001)
+            self.assertEqual(np.size(x_pred), (3,1001))
             self.assertTrue(np.isclose(x_pred[-1][-1], 10))
             self.assertEqual(round(x_pred[-1][0], 3), 0.516)
             self.assertEqual(round(x_pred[-1][1], 3), 0.103)
@@ -53,7 +53,6 @@ class TestMethods(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
-
 # %%
 '''
 tests needed:

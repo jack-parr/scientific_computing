@@ -103,6 +103,7 @@ def solve_to(func, method, x0, t0, t1, deltat_max, args):
     input_checks.test_string(method, 'method')
     input_checks.test_list_nparray(x0, 'x0')
     input_checks.test_float_int(t0, 't0')
+    input_checks.test_float_int(t1, 't1')
     input_checks.test_float_int(deltat_max, 'deltat_max')
     input_checks.test_list_nparray(args, 'args')
 
