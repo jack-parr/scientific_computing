@@ -1,33 +1,27 @@
 # %%
 import numpy as np
-from numerical_shooting import shooting_problem
 import scipy as sp
 import matplotlib.pyplot as plt
-
+from numerical_shooting import shooting_problem
 # %%
-# NATURAL PARAMETER CONTINUATION
-def func1(x, args):
-    c = args[0]
-    return x**3 - x + c
+def natural_cont(func, x0, init_args, vary_par_idx, max_par, num_steps, discretisation=(lambda x: x), solver=sp.optimize.fsolve):
+    """
+    Text.
+    ----------
+    Parameters
+    x0 : list
+        The guess of the coordinates and time period of a periodic orbit.
+    phase_con : function
+        Returns the phase condition of the shooting problem.
+    func_args : list
+        Additional parameters needed by 'func'.
+    phase_args : list
+        Additional parameters needed by 'phase_con'.
+    ----------
+    Returns
+        Text.
+    """
 
-c_all = np.linspace(-2, 2, 100)
-r_stor = []
-
-root = sp.optimize.fsolve(func1, x0=5, args=[-2])
-r_stor.append(root)
-for c in c_all[1:]:
-    root = sp.optimize.fsolve(func1, x0=root, args=[c])
-    r_stor.append(root)
-
-plt.plot(c_all, r_stor)
-
-# %%
-x = np.linspace(-2, 2, 100)
-y = func1(x, [0])
-plt.plot(x, y)
-plt.grid()
-# %%
-def natural_cont(func, x0, vary_par_idx, max_par, num_steps, discretisation, solver=sp.optimize.fsolve, init_args=None):
     u_stor = []
     pars = np.linspace(init_args[vary_par_idx], max_par, num_steps)
 
@@ -37,53 +31,26 @@ def natural_cont(func, x0, vary_par_idx, max_par, num_steps, discretisation, sol
         u_stor.append(root)
         x0 = root
 
-    return np.array([u_stor, pars])
+    return np.vstack([np.array(u_stor).T, pars])
 # %%
-# WITH DISCRETISATION
-def hopf_normal():
-    return 1
-# %%
-# NO DISCRETISATION
-def func1(x, args):
-    c = args[0]
-    return x**3 - x + c
+def pseudo_arclength(func, x0, init_args, vary_par_idx, max_par, num_steps, discretisation=(lambda x: x), solver=sp.optimize.fsolve, phase_con=None):
 
-c = -2
+    pars = np.linspace(init_args[vary_par_idx], max_par, num_steps)
 
-test_nat = natural_cont(
-    func=func1,
-    x0=5,
-    vary_par_idx=0,
-    max_par=2,
-    num_steps=400,
-    discretisation=(lambda x: x),
-    solver=sp.optimize.fsolve,
-    init_args=[c]
-)
+    def make_args(phase_con, init_args, vary_par_idx, new_par):
+        init_args[vary_par_idx] = new_par
+        if phase_con != None:
+            a = (phase_con, init_args, init_args)
+        else:
+            a = (init_args)
 
-plt.plot(test_nat[-1], test_nat[0])
-# %%
-
-
-def pseudo_arclength(func, x0, args0, vary_par_idx, max_par, num_steps, discretisation, pc, solver):
-    pars = np.linspace(args0[vary_par_idx], max_par, num_steps)
-
+        return a
+    
     # find first two values
-    if pc != None:
-        a = (pc, args0)
-    else:
-        a = (args0)
-    x1 = solver(discretisation(func), x0, args=a)
-    args0[vary_par_idx] = pars[1]
-    x2 = solver(discretisation(func), x1, args=a)
+    x1 = solver(discretisation(func), x0, args=make_args(phase_con, init_args, vary_par_idx, pars[0]))
+    x2 = solver(discretisation(func), x1, args=make_args(phase_con, init_args, vary_par_idx, pars[1]))
 
-    #r_stor = np.empty(shape=(num_steps, len(x1)))*np.nan
-    #r_stor[0] = x1
-    #r_stor[1] = x2
     r_stor = [x1, x2]
-    #par_stor = np.empty(shape=(num_steps, 1))*np.nan
-    #par_stor[0] = pars[0]
-    #par_stor[1] = pars[1]
     par_stor = [pars[0], pars[1]]
 
     i = 2
@@ -99,24 +66,19 @@ def pseudo_arclength(func, x0, args0, vary_par_idx, max_par, num_steps, discreti
         # calulate arclength equation
         x_pred = x_1 + dx
         p_pred = p_1 + dp
-        # preds = np.array([x_pred, p_pred], dtype='float64')
         preds = np.append(x_pred, p_pred)
-        
-
-        # update parameter
-        args0[vary_par_idx] = p_pred
 
         # pseudo solve
-        def aug_prob(x0, func, pc, discretisation, dx, dp, args0, vary_par_idx):
+        def aug_prob(x0, func, vary_par_idx, dx, dp, discretisation, phase_con, init_args):
             x = x0[:-1]
             p = x0[-1]
-            args0[vary_par_idx] = p
+            init_args = make_args(phase_con, init_args, vary_par_idx, p)
 
             d = discretisation(func)
-            if pc != None:
-                g = d(x, pc, args0)
+            if phase_con != None:
+                g = d(x, init_args[0], init_args[1], init_args[2])
             else:
-                g = d(x, args0)
+                g = d(x, init_args)
             
             
             arc = np.dot(x - x_pred, dx) + np.dot(p - p_pred, dp)
@@ -124,32 +86,34 @@ def pseudo_arclength(func, x0, args0, vary_par_idx, max_par, num_steps, discreti
             return f
         
 
-        result = solver(aug_prob, preds, args=(func, pc, discretisation, dx, dp, args0, vary_par_idx))
-        #r_stor[i] = result[:-1]
+        result = solver(aug_prob, preds, args=(func, vary_par_idx, dx, dp, discretisation, phase_con, init_args))
         r_stor.append(result[:-1])
-        #par_stor[i] = result[-1]
         par_stor.append(result[-1])
 
         i += 1
 
-    return r_stor, par_stor
+    return np.vstack([np.array(r_stor).T, np.array(par_stor)])
 
 # %%
+def func1(x, args):
+    c = args[0]
+    return x**3 - x + c
+
 c = -2
 
-test_pseudo1, test_pseudo2 = pseudo_arclength(
+test1 = pseudo_arclength(
     func=func1,
     x0=5,
-    args0=[c],
+    init_args=[c],
     vary_par_idx=0,
     max_par=2,
     num_steps=400,
     discretisation=(lambda x: x),
-    pc=None,
-    solver=sp.optimize.fsolve
+    solver=sp.optimize.fsolve,
+    phase_con=None    
 )
 
-plt.plot(test_pseudo2, test_pseudo1)
+plt.plot(test1[-1], test1[0])
 
 # %%
 def hopf_func(x, t, args):
@@ -161,17 +125,18 @@ def hopf_func(x, t, args):
 def hopf_pc(x, args):
     return hopf_func(x, 0, args)[0]
 
-# %%
-hopf_pseudo1, hopf_pseudo2 = pseudo_arclength(
+test2 = pseudo_arclength(
     func=hopf_func,
     x0=[1.4, 1, 6.3],
-    args0=[2, -1],
+    init_args=[2, -1],
     vary_par_idx=0,
     max_par=-1,
     num_steps=50,
     discretisation=shooting_problem,
-    pc=hopf_pc,
-    solver=sp.optimize.fsolve
+    solver=sp.optimize.fsolve,
+    phase_con=hopf_pc
 )
 
-plt.plot(hopf_pseudo2, hopf_pseudo1)
+check = test2[0]
+plt.plot(test2[-1], test2[0])
+# %%

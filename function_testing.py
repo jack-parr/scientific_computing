@@ -2,12 +2,50 @@
 import numpy as np
 import scipy as sp
 import matplotlib.pyplot as plt
+import math
 import ode_solver as solve_ode
 import numerical_shooting as shooting
+import numerical_continuation as num_con
 import pde_solver as solve_pde
-import math
 
-#%%
+# %%
+# NATURAL PARAMETER CONTINUATION
+def func1(x, args):
+    c = args[0]
+    return x**3 - x + c
+# %%
+# TRUTH PLOTS
+c_all = np.linspace(-2, 2, 100)
+r_stor = []
+
+root = sp.optimize.fsolve(func1, x0=5, args=[-2])
+r_stor.append(root)
+for c in c_all[1:]:
+    root = sp.optimize.fsolve(func1, x0=root, args=[c])
+    r_stor.append(root)
+
+plt.plot(c_all, r_stor)
+# %%
+x = np.linspace(-2, 2, 100)
+y = func1(x, [0])
+plt.plot(x, y)
+plt.grid()
+# %%
+# NO DISCRETISATION
+c = -2
+
+test_nat = num_con.natural_cont(
+    func=func1,
+    x0=5,
+    init_args=[c],
+    vary_par_idx=0,
+    max_par=2,
+    num_steps=400,
+    solver=sp.optimize.fsolve
+)
+
+plt.plot(test_nat[-1], test_nat[0])
+# %%
 def hopf_func(x, t, args):
     b, s = args
     x1, x2, x3 = x
