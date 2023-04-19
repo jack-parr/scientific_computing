@@ -1,25 +1,30 @@
-# %%
 import numpy as np
 import scipy as sp
-import matplotlib.pyplot as plt
-from numerical_shooting import shooting_problem
-# %%
-def natural_cont(func, x0, init_args, vary_par_idx, max_par, num_steps, discretisation=(lambda x: x), solver=sp.optimize.fsolve):
+
+def natural_continuation(func, x0, init_args, vary_par_idx, max_par, num_steps, discretisation=(lambda x: x), solver=sp.optimize.fsolve):
     """
-    Text.
+    Performs natural parameter continuation. Solves the function while varying the indicated parameter.
     ----------
     Parameters
+    func : function
+        The function to be solved.
     x0 : list
-        The guess of the coordinates and time period of a periodic orbit.
-    phase_con : function
-        Returns the phase condition of the shooting problem.
-    func_args : list
-        Additional parameters needed by 'func'.
-    phase_args : list
-        Additional parameters needed by 'phase_con'.
+        Initial coordinates and phase condition if relevant.
+    init_args : list
+        Initial args to be used by 'func'.
+    vary_par_idx : int
+        Index of parameter to be varied within 'init_args'.
+    max_par : float OR int
+        Maximum (or minimum) value of the parameter at 'vary_par_idx' to be solved at.
+    num_steps : int
+        Number of parameter values to be solved at. Paramters values are evenly incremented this number of times.
+    discretisation : function
+        Function to be used to discretise the problem. Defaults to no adaptation.
+    solver : function
+        Function to be used to solve the root problem. Defaults to scipy's 'fsolve'.
     ----------
     Returns
-        Text.
+        A numpy.array with a row of values for each solved coordinate, and the final row being the varied parameter values solved at.
     """
 
     u_stor = []
@@ -32,111 +37,85 @@ def natural_cont(func, x0, init_args, vary_par_idx, max_par, num_steps, discreti
         x0 = root
 
     return np.vstack([np.array(u_stor).T, pars])
-# %%
-def pseudo_arclength(func, x0, init_args, vary_par_idx, max_par, num_steps, discretisation=(lambda x: x), solver=sp.optimize.fsolve, phase_con=None):
 
-    pars = np.linspace(init_args[vary_par_idx], max_par, num_steps)
+
+def pseudo_arclength(func, x0, init_args, vary_par_idx, max_par, num_steps, discretisation=(lambda x: x), solver=sp.optimize.fsolve, phase_con=None):
+    """
+    Performs peudo-arclength continuation. Solves the augumented problem function, which is the normal root problem alongside the arclength equation, while varying the indicated parameter.
+    ----------
+    Parameters
+    func : function
+        The function to be solved.
+    x0 : list
+        Initial coordinates and phase condition if relevant.
+    init_args : list
+        Initial args to be used by 'func'.
+    vary_par_idx : int
+        Index of parameter to be varied within 'init_args'.
+    max_par : float OR int
+        Maximum (or minimum) value of the parameter at 'vary_par_idx' to be solved at.
+    num_steps : int
+        Number of parameter values to be solved at. Paramters values are evenly incremented this number of times.
+    discretisation : function
+        Function to be used to discretise the problem. Defaults to no adaptation.
+    solver : function
+        Function to be used to solve the root problem. Defaults to scipy's 'fsolve'.
+    phase_con : function
+        Function which returns the phase condition of the problem.
+    ----------
+    Returns
+        A numpy.array with a row of values for each solved coordinate and phase condition if relevant, and the final row being the varied parameter values solved at.
+    """
 
     def make_args(phase_con, init_args, vary_par_idx, new_par):
         init_args[vary_par_idx] = new_par
         if phase_con != None:
-            a = (phase_con, init_args, init_args)
+            args = (phase_con, init_args, init_args)
         else:
-            a = (init_args)
-
-        return a
+            args = (init_args)
+        return args
     
-    # find first two values
+    pars = np.linspace(init_args[vary_par_idx], max_par, num_steps)
+
+    # INITIALISE OUTPUTS
     x1 = solver(discretisation(func), x0, args=make_args(phase_con, init_args, vary_par_idx, pars[0]))
     x2 = solver(discretisation(func), x1, args=make_args(phase_con, init_args, vary_par_idx, pars[1]))
-
-    r_stor = [x1, x2]
+    u_stor = [x1, x2]
     par_stor = [pars[0], pars[1]]
 
     i = 2
     while i < num_steps:
-        # get last two values
-        x_0, x_1 = r_stor[-2], r_stor[-1]
+        # RETRIEVE LAST TWO VALUES
+        x_0, x_1 = u_stor[-2], u_stor[-1]
         p_0, p_1 = par_stor[-2], par_stor[-1]
 
-        # calculate secant
+        # SECANT
         dx = x_1 - x_0
         dp = p_1 - p_0
 
-        # calulate arclength equation
+        # ARCLENGTH EQUATION
         x_pred = x_1 + dx
         p_pred = p_1 + dp
         preds = np.append(x_pred, p_pred)
 
-        # pseudo solve
+        # DEFINE AUGMENTED PROBLEM
         def aug_prob(x0, func, vary_par_idx, dx, dp, discretisation, phase_con, init_args):
             x = x0[:-1]
             p = x0[-1]
             init_args = make_args(phase_con, init_args, vary_par_idx, p)
-
             d = discretisation(func)
             if phase_con != None:
                 g = d(x, init_args[0], init_args[1], init_args[2])
             else:
                 g = d(x, init_args)
-            
-            
             arc = np.dot(x - x_pred, dx) + np.dot(p - p_pred, dp)
-            f = np.append(g, arc)
-            return f
+            return np.append(g, arc)
         
-
+        # SOLVE
         result = solver(aug_prob, preds, args=(func, vary_par_idx, dx, dp, discretisation, phase_con, init_args))
-        r_stor.append(result[:-1])
+        u_stor.append(result[:-1])
         par_stor.append(result[-1])
 
         i += 1
 
-    return np.vstack([np.array(r_stor).T, np.array(par_stor)])
-
-# %%
-def func1(x, args):
-    c = args[0]
-    return x**3 - x + c
-
-c = -2
-
-test1 = pseudo_arclength(
-    func=func1,
-    x0=5,
-    init_args=[c],
-    vary_par_idx=0,
-    max_par=2,
-    num_steps=400,
-    discretisation=(lambda x: x),
-    solver=sp.optimize.fsolve,
-    phase_con=None    
-)
-
-plt.plot(test1[-1], test1[0])
-
-# %%
-def hopf_func(x, t, args):
-    b, s = args
-    x1, x2 = x
-    dxdt = np.array([((b*x1) - x2 + (s*x1*(x1**2 + x2**2))), (x1 + (b*x2) + (s*x2*(x1**2 + x2**2)))])
-    return dxdt
-
-def hopf_pc(x, args):
-    return hopf_func(x, 0, args)[0]
-
-test2 = pseudo_arclength(
-    func=hopf_func,
-    x0=[1.4, 1, 6.3],
-    init_args=[2, -1],
-    vary_par_idx=0,
-    max_par=-1,
-    num_steps=50,
-    discretisation=shooting_problem,
-    solver=sp.optimize.fsolve,
-    phase_con=hopf_pc
-)
-
-check = test2[0]
-plt.plot(test2[-1], test2[0])
-# %%
+    return np.vstack([np.array(u_stor).T, np.array(par_stor)])

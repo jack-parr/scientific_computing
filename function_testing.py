@@ -46,6 +46,54 @@ test_nat = num_con.natural_cont(
 
 plt.plot(test_nat[-1], test_nat[0])
 # %%
+# PSEUDO
+# NO DISCRETISATION
+def func1(x, args):
+    c = args[0]
+    return x**3 - x + c
+
+c = -2
+
+test1 = num_con.pseudo_arclength(
+    func=func1,
+    x0=5,
+    init_args=[c],
+    vary_par_idx=0,
+    max_par=2,
+    num_steps=400,
+    discretisation=(lambda x: x),
+    solver=sp.optimize.fsolve,
+    phase_con=None    
+)
+
+plt.plot(test1[-1], test1[0])
+
+# %%
+# WITH PHASE CONDITION AND DISCRETISATION
+def hopf_func(x, t, args):
+    b, s = args
+    x1, x2 = x
+    dxdt = np.array([((b*x1) - x2 + (s*x1*(x1**2 + x2**2))), (x1 + (b*x2) + (s*x2*(x1**2 + x2**2)))])
+    return dxdt
+
+def hopf_pc(x, args):
+    return hopf_func(x, 0, args)[0]
+
+test2 = num_con.pseudo_arclength(
+    func=hopf_func,
+    x0=[1.4, 1, 6.3],
+    init_args=[2, -1],
+    vary_par_idx=0,
+    max_par=-1,
+    num_steps=50,
+    discretisation=shooting.shooting_problem,
+    solver=sp.optimize.fsolve,
+    phase_con=hopf_pc
+)
+
+check = test2[0]
+plt.plot(test2[-1], test2[0])
+# %%
 def hopf_func(x, t, args):
     b, s = args
     x1, x2, x3 = x
