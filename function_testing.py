@@ -43,6 +43,8 @@ test_nat = num_con.natural_continuation(
     num_steps=400,
     solver=sp.optimize.fsolve
 )
+print(test_nat[0][-1])
+print(test_nat[1][-1])
 
 plt.plot(test_nat[-1], test_nat[0])
 # %%
@@ -67,6 +69,30 @@ test1 = num_con.pseudo_arclength(
 )
 
 plt.plot(test1[-1], test1[0])
+
+# %%
+def hopf_normal(x, t, args):
+    b = args[0]
+    x1, x2 = x
+    return np.array([b*x1 - x2 - x1*(x1**2 + x2**2), x1 + b*x2 - x2*(x1**2 + x2**2)])
+
+def hopf_pc(x, args):
+    return hopf_normal(x, 0, args)[0]
+
+testhopfnormal = num_con.pseudo_arclength(
+    func=hopf_normal,
+    x0=[1.4, 1, 6.3],
+    init_args=[2],
+    vary_par_idx=0,
+    max_par=-1,
+    num_steps=50,
+    discretisation=shooting.shooting_problem,
+    solver=sp.optimize.fsolve,
+    phase_con=hopf_pc
+)
+
+check = testhopfnormal[0]
+plt.plot(testhopfnormal[-1], testhopfnormal[0])
 
 # %%
 # WITH PHASE CONDITION AND DISCRETISATION
@@ -112,6 +138,12 @@ def pred_prey(x, t, args):
 def pp_pc(x, args):
     return pred_prey(x, 0, args)[1]
 
+# %%
+x0 = [0.6, 0.6, 20]
+t0 = 0
+delta_t = 1
+x_pred = shooting.orbit_shoot(pred_prey, x0, sp.optimize.fsolve, pp_pc, func_args=[1, 0.2, 0.1], phase_args=[1, 0.2, 0.1])
+print(x_pred)
 # %%
 a = 1
 b = 0.2
