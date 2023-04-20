@@ -35,12 +35,13 @@ def hopf_pc(x, args):
     return hopf_normal(x, 0, args)[0]
 
 
-def diff_l_bound(x, t, args): # at x=x_min
+def diff_l_bound(x, t, args):
     return 0
 
 
-def diff_r_bound(x, t, args): # at x=x_max
-    return 0
+def diff_r_bound(x, t, args):
+    delta, gamma = args
+    return delta - (gamma*x)
 
 
 def diff_init(x, t, args):
@@ -214,9 +215,7 @@ class test_methods_numerical_continuation(unittest.TestCase):
 
 
 class test_methods_pde_solver(unittest.TestCase):
-    '''
-    STILL NEEDS ROBIN TESTS
-    '''
+
     def test_solve_diffusion(self):
         
         # DIRICHLET BOUNDARY TYPE
@@ -225,6 +224,7 @@ class test_methods_pde_solver(unittest.TestCase):
             boundary_type='dirichlet', 
             l_bound_func=diff_l_bound, 
             r_bound_func=diff_r_bound, 
+            r_bound_args=[0, 0],
             init_func=diff_init, 
             D=1, 
             x_min=0, 
@@ -247,6 +247,7 @@ class test_methods_pde_solver(unittest.TestCase):
             boundary_type='dirichlet', 
             l_bound_func=diff_l_bound, 
             r_bound_func=diff_r_bound, 
+            r_bound_args=[0, 0],
             init_func=diff_init, 
             D=1, 
             x_min=0, 
@@ -269,6 +270,7 @@ class test_methods_pde_solver(unittest.TestCase):
             boundary_type='dirichlet', 
             l_bound_func=diff_l_bound, 
             r_bound_func=diff_r_bound, 
+            r_bound_args=[0, 0],
             init_func=diff_init, 
             D=1, 
             x_min=0, 
@@ -293,6 +295,7 @@ class test_methods_pde_solver(unittest.TestCase):
             boundary_type='neumann', 
             l_bound_func=diff_l_bound, 
             r_bound_func=diff_r_bound, 
+            r_bound_args=[0, 0],
             init_func=diff_init, 
             D=1, 
             x_min=0, 
@@ -303,9 +306,9 @@ class test_methods_pde_solver(unittest.TestCase):
             nt=1000, 
             init_args=[0, 5])
         self.assertEqual(np.shape(x_pred), (2, 101))
-        self.assertAlmostEqual(round(x_pred[0][0], 3), 0.025)
+        self.assertEqual(x_pred[0][0], 0)
         self.assertAlmostEqual(round(x_pred[0][-1], 3), 0.440)
-        self.assertAlmostEqual(round(x_pred[0][10], 3), 0.270)
+        self.assertAlmostEqual(round(x_pred[0][10], 3), 0.254)
         self.assertAlmostEqual(round(x_pred[0][-10], 3), 0.472)
         self.assertAlmostEqual(round(x_pred[1][10], 3), 0.500)
         self.assertAlmostEqual(round(x_pred[1][-10], 3), 4.550)
@@ -315,6 +318,7 @@ class test_methods_pde_solver(unittest.TestCase):
             boundary_type='neumann', 
             l_bound_func=diff_l_bound, 
             r_bound_func=diff_r_bound, 
+            r_bound_args=[0, 0],
             init_func=diff_init, 
             D=1, 
             x_min=0, 
@@ -325,9 +329,9 @@ class test_methods_pde_solver(unittest.TestCase):
             nt=1000, 
             init_args=[0, 5])
         self.assertEqual(np.shape(x_pred), (2, 101))
-        self.assertAlmostEqual(round(x_pred[0][0], 3), 0.025)
+        self.assertEqual(x_pred[0][0], 0)
         self.assertAlmostEqual(round(x_pred[0][-1], 3), 0.440)
-        self.assertAlmostEqual(round(x_pred[0][10], 3), 0.270)
+        self.assertAlmostEqual(round(x_pred[0][10], 3), 0.254)
         self.assertAlmostEqual(round(x_pred[0][-10], 3), 0.472)
         self.assertAlmostEqual(round(x_pred[1][10], 3), 0.500)
         self.assertAlmostEqual(round(x_pred[1][-10], 3), 4.550)
@@ -337,6 +341,7 @@ class test_methods_pde_solver(unittest.TestCase):
             boundary_type='neumann', 
             l_bound_func=diff_l_bound, 
             r_bound_func=diff_r_bound, 
+            r_bound_args=[0, 0],
             init_func=diff_init, 
             D=1, 
             x_min=0, 
@@ -347,15 +352,83 @@ class test_methods_pde_solver(unittest.TestCase):
             nt=1000, 
             init_args=[0, 5])
         self.assertEqual(np.shape(x_pred), (2, 101))
-        self.assertAlmostEqual(round(x_pred[0][0], 3), 0.025)
+        self.assertEqual(x_pred[0][0], 0)
         self.assertAlmostEqual(round(x_pred[0][-1], 3), 0.440)
-        self.assertAlmostEqual(round(x_pred[0][10], 3), 0.270)
+        self.assertAlmostEqual(round(x_pred[0][10], 3), 0.254)
         self.assertAlmostEqual(round(x_pred[0][-10], 3), 0.472)
         self.assertAlmostEqual(round(x_pred[1][10], 3), 0.500)
         self.assertAlmostEqual(round(x_pred[1][-10], 3), 4.550)
 
 
         # ROBIN BOUNDARY TYPE
+        x_pred = pde_solver.solve_diffusion(
+            method='explicit_euler', 
+            boundary_type='robin', 
+            l_bound_func=diff_l_bound, 
+            r_bound_func=diff_r_bound, 
+            r_bound_args=[0, 2],
+            init_func=diff_init, 
+            D=1, 
+            x_min=0, 
+            x_max=5, 
+            nx=100, 
+            t_min=0, 
+            t_max=0.5, 
+            nt=1000, 
+            init_args=[0, 5])
+        self.assertEqual(np.shape(x_pred), (2, 101))
+        self.assertEqual(x_pred[0][0], 0)
+        self.assertAlmostEqual(round(x_pred[0][-1], 3), 0.178)
+        self.assertAlmostEqual(round(x_pred[0][10], 3), 0.254)
+        self.assertAlmostEqual(round(x_pred[0][-10], 3), 0.339)
+        self.assertAlmostEqual(round(x_pred[1][10], 3), 0.500)
+        self.assertAlmostEqual(round(x_pred[1][-10], 3), 4.550)
+
+        x_pred = pde_solver.solve_diffusion(
+            method='implicit_euler', 
+            boundary_type='robin', 
+            l_bound_func=diff_l_bound, 
+            r_bound_func=diff_r_bound, 
+            r_bound_args=[0, 2],
+            init_func=diff_init, 
+            D=1, 
+            x_min=0, 
+            x_max=5, 
+            nx=100, 
+            t_min=0, 
+            t_max=0.5, 
+            nt=1000, 
+            init_args=[0, 5])
+        self.assertEqual(np.shape(x_pred), (2, 101))
+        self.assertEqual(x_pred[0][0], 0)
+        self.assertAlmostEqual(round(x_pred[0][-1], 3), 0.178)
+        self.assertAlmostEqual(round(x_pred[0][10], 3), 0.254)
+        self.assertAlmostEqual(round(x_pred[0][-10], 3), 0.339)
+        self.assertAlmostEqual(round(x_pred[1][10], 3), 0.500)
+        self.assertAlmostEqual(round(x_pred[1][-10], 3), 4.550)
+
+        x_pred = pde_solver.solve_diffusion(
+            method='crank_nicolson', 
+            boundary_type='robin', 
+            l_bound_func=diff_l_bound, 
+            r_bound_func=diff_r_bound, 
+            r_bound_args=[0, 2],
+            init_func=diff_init, 
+            D=1, 
+            x_min=0, 
+            x_max=5, 
+            nx=100, 
+            t_min=0, 
+            t_max=0.5, 
+            nt=1000, 
+            init_args=[0, 5])
+        self.assertEqual(np.shape(x_pred), (2, 101))
+        self.assertEqual(x_pred[0][0], 0)
+        self.assertAlmostEqual(round(x_pred[0][-1], 3), 0.178)
+        self.assertAlmostEqual(round(x_pred[0][10], 3), 0.254)
+        self.assertAlmostEqual(round(x_pred[0][-10], 3), 0.339)
+        self.assertAlmostEqual(round(x_pred[1][10], 3), 0.500)
+        self.assertAlmostEqual(round(x_pred[1][-10], 3), 4.550)
 
 
 # RUN TESTS

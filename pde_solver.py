@@ -26,7 +26,7 @@ def sparse_A(size, dm, do):
     return sp.sparse.csr_matrix((data, (row_idx, col_idx)), shape=(size,size))
 
 
-def solve_diffusion(method, boundary_type, l_bound_func, r_bound_func, init_func, D, x_min, x_max, nx, t_min, t_max, nt, source_func=None, l_bound_args=None, r_bound_args=None, init_args=None, source_args=None):
+def solve_diffusion(method, boundary_type, l_bound_func, r_bound_func, r_bound_args, init_func, D, x_min, x_max, nx, t_min, t_max, nt, source_func=None, l_bound_args=None, init_args=None, source_args=None):
     """
     Solves the heat equation using the input method and boundary conditions.
     ----------
@@ -39,6 +39,8 @@ def solve_diffusion(method, boundary_type, l_bound_func, r_bound_func, init_func
         Function that takes singular (x, t) as inputs and returns the left boundary value.
     r_bound_func : function
         Function that takes singular values (x, t) as inputs and returns the right boundary value.
+    r_bound_args : list OR numpy.ndarray
+        Additional arguments needed by 'r_bound_func'. Must contain two values [delta, gamma], such that r_bound_func = delta - gamma*u(x).
     init_func : function
         Function that takes arrays (x, t) and singular values (x_min, x_max) as inputs and returns intitial solution array.
     D : float OR int
@@ -59,8 +61,6 @@ def solve_diffusion(method, boundary_type, l_bound_func, r_bound_func, init_func
         Function that takes singular values (x, t) and list (args) as inputs and returns source value.
     l_bound_args : list OR numpy.ndarray
         Additional arguments needed by 'l_bound_func'.
-    r_bound_args : list OR numpy.ndarray
-        Additional arguments needed by 'r_bound_func'.
     init_args : list OR numpy.ndarray
         Additional arguments needed by 'init_func'.
     source_args : list OR numpy.ndarray
@@ -79,6 +79,9 @@ def solve_diffusion(method, boundary_type, l_bound_func, r_bound_func, init_func
         raise Exception('Argument (boundary_type) must be either \'dirichlet\', \'neumann\', or \'robin\'.')
     input_checks.test_function(l_bound_func, 'l_bound_func')
     input_checks.test_function(r_bound_func, 'r_bound_func')
+    input_checks.test_list_nparray(r_bound_args, 'r_bound_args')
+    if len(r_bound_args) != 2:
+        raise Exception('Argument (r_bound_args) must contain two values.')
     input_checks.test_function(init_func, 'init_func')
     input_checks.test_float_int(D, 'D')
     input_checks.test_float_int(x_min, 'x_min')
@@ -91,8 +94,6 @@ def solve_diffusion(method, boundary_type, l_bound_func, r_bound_func, init_func
         input_checks.test_function(source_func, 'source_func')
     if l_bound_args != None:
         input_checks.test_list_nparray(l_bound_args, 'l_bound_args')
-    if r_bound_args != None:
-        input_checks.test_list_nparray(r_bound_args, 'r_bound_args')
     if init_args != None:
         input_checks.test_list_nparray(init_args, 'init_args')
     if source_args != None:
@@ -121,8 +122,12 @@ def solve_diffusion(method, boundary_type, l_bound_func, r_bound_func, init_func
         u_t = init_func(x_arr[1:nx], 0, init_args)
 
     if boundary_type == 'neumann':
-        size = nx+1
-        u_t = init_func(x_arr, 0, init_args)
+        size = nx
+        u_t = init_func(x_arr[1:], 0, init_args)
+
+    if boundary_type == 'robin':
+        size = nx
+        u_t = init_func(x_arr[1:], 0, init_args)
 
     # CREATE SPARSE MATRICES
     I_mat = sp.sparse.identity(size, format='csr')
@@ -133,7 +138,7 @@ def solve_diffusion(method, boundary_type, l_bound_func, r_bound_func, init_func
         def make_b(t):
             b = np.zeros(size)
             b[0] = l_bound_func(x_min, t, l_bound_args)
-            b[-1] = r_bound_func(x_max, t, r_bound_args)
+            b[-1] = r_bound_func(x_max, t, args=[r_bound_args[0], 0])
             return b + dt*source_func(x_arr[1:nx], t, u_t, source_args)
     
     if boundary_type == 'neumann':
@@ -141,18 +146,18 @@ def solve_diffusion(method, boundary_type, l_bound_func, r_bound_func, init_func
         def make_b(t):
             b = np.zeros(size)
             b[0] = l_bound_func(x_min, t, l_bound_args)
-            b[-1] = r_bound_func(x_max, t, r_bound_args) * 2 * dx
-            return b + dt*source_func(x_arr, t, u_t, source_args)
+            b[-1] = r_bound_func(x_max, t, args=[r_bound_args[0], 0]) * 2 * dx
+            return b + dt*source_func(x_arr[1:], t, u_t, source_args)
     
-    # NEED TO REVIEW THIS
     if boundary_type == 'robin':
         A_mat[size-1, size-2] *= 2
-        A_mat[size-1, size-1] *= 1+(r_bound_func(x_max, 0, r_bound_args)*dx)
+        #A_mat[size-1, size-1] *= 1 + r_bound_func(x_max, 0, args=[0, r_bound_args[1]]) * dx
+        A_mat[size-1, size-1] *= 1 + r_bound_args[1] * dx
         def make_b(t):
             b = np.zeros(size)
             b[0] = l_bound_func(x_min, t, l_bound_args)
-            b[-1] = r_bound_func(x_max, t, r_bound_args) * 2 * dx
-            return b
+            b[-1] = r_bound_args[0] * 2 * dx
+            return b + dt*source_func(x_arr[1:], t, u_t, source_args)
     
     # SOLVE
     if method == 'explicit_euler':
@@ -172,6 +177,8 @@ def solve_diffusion(method, boundary_type, l_bound_func, r_bound_func, init_func
 
     # MODIFY u_t ACCORDING TO BOUNDARY CONDITIONS
     if boundary_type == 'dirichlet':
-        u_t = np.concatenate((np.array([l_bound_func(x_min, 0, l_bound_args)]), u_t, np.array([r_bound_func(x_max, 0, r_bound_args)])))
+        u_t = np.concatenate((np.array([l_bound_func(x_min, 0, l_bound_args)]), u_t, np.array([r_bound_func(x_max, 0, args=[r_bound_args[0], 0])])))
+    else:
+        u_t = np.concatenate((np.array([l_bound_func(x_min, 0, l_bound_args)]), u_t))
 
     return np.vstack([u_t, x_arr])

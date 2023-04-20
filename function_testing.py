@@ -9,6 +9,54 @@ import numerical_continuation as num_con
 import pde_solver as solve_pde
 
 # %%
+# PDE SOLVER
+# parameters
+D = 1
+x_min = 0
+x_max = 5
+t_min = 0
+t_max = 0.5
+nx = 100
+nt = 1000
+
+def l_bound(x, t, args): # at x=x_min
+    return 0
+
+def r_bound(x, t, args): # at x=x_max
+    delta, gamma = args
+    return delta - (gamma*x)
+
+def initial(x, t, args):
+    x_min, x_max = args
+    y = np.sin((math.pi * x) / (x_max - x_min))
+    return y
+
+output = solve_pde.solve_diffusion(
+    'crank_nicolson', 
+    'robin', 
+    l_bound, 
+    r_bound, 
+    [0, 0],
+    initial, 
+    D, 
+    x_min, 
+    x_max, 
+    nx, 
+    t_min, 
+    t_max, 
+    nt, 
+    init_args=[x_min, x_max]
+    )
+
+def heat_exact(x, t, D, x_min, x_max):
+    L = x_max - x_min
+    return np.exp(-D * t * (math.pi**2 / L**2)) * np.sin((math.pi * (x - x_min)) / (L))
+
+heat_true = heat_exact(output[1], t_max, D, x_min, x_max)
+#plt.plot(output[:,1], heat_true, output[:,1], output[:,0])
+plt.plot(output[1], heat_true, output[1], output[0])
+
+# %%
 # NATURAL PARAMETER CONTINUATION
 def func1(x, args):
     c = args[0]
