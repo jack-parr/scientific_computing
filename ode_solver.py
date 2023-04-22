@@ -29,7 +29,8 @@ def euler_step(func, x0, t0, delta_t, args):
     input_checks.test_list_nparray(x0, 'x0')
     input_checks.test_float_int(t0, 't0')
     input_checks.test_float_int(delta_t, 'delta_t')
-    input_checks.test_list_nparray(args, 'args')
+    if args != None:
+        input_checks.test_list_nparray(args, 'args')
 
     grad = func(x0, t0, args)
     t1 = t0 + delta_t
@@ -63,7 +64,8 @@ def rk4_step(func, x0, t0, delta_t, args):
     input_checks.test_list_nparray(x0, 'x0')
     input_checks.test_float_int(t0, 't0')
     input_checks.test_float_int(delta_t, 'delta_t')
-    input_checks.test_list_nparray(args, 'args')
+    if args != None:
+        input_checks.test_list_nparray(args, 'args')
 
     k1 = grad = func(x0, t0, args)
     k2 = grad + (k1*delta_t)/2
@@ -74,7 +76,7 @@ def rk4_step(func, x0, t0, delta_t, args):
     return x0 + (k1/6 + k2/3 + k3/3 + k4/6)*delta_t, t1
 
 
-def solve_to(func, method, x0, t0, t1, deltat_max, args):
+def solve_to(func, method, x0, t0, t1, deltat_max, args=None):
     """
     Solves the function from (x0, t0) to (x1, t1) taking steps no larger than 'deltat_max', using the method defined by 'method'.
     ----------
@@ -105,7 +107,8 @@ def solve_to(func, method, x0, t0, t1, deltat_max, args):
     input_checks.test_float_int(t0, 't0')
     input_checks.test_float_int(t1, 't1')
     input_checks.test_float_int(deltat_max, 'deltat_max')
-    input_checks.test_list_nparray(args, 'args')
+    if args != None:
+        input_checks.test_list_nparray(args, 'args')
 
     if method == 'euler':
         fstep = euler_step
