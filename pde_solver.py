@@ -1,6 +1,33 @@
+# %%
 import scipy as sp
 import numpy as np
+import matplotlib.pyplot as plt
+import ode_solver
+import math
 import input_checks
+
+
+def findiff_problem(u, t, args):
+    # finite difference for root solver.
+    source, boundary, size, dx, l_bound, r_bound = args
+    F = np.zeros(size)
+
+    # FIRST TERM
+    F[0] = ((u[1] - 2*u[0] + l_bound) / dx**2) + source[0]
+
+    # INNER TERMS
+    for i in range(1, size-1):
+        F[i] = ((u[i+1] - 2*u[i] + u[i-1]) / dx**2) + source[i]
+
+    # FINAL TERM
+    if boundary == 'dirichlet':
+        F[-1] = ((r_bound[0] - 2*u[-1] + u[-2]) / dx**2) + source[-1]
+    elif boundary == 'neumann':
+        F[-1] = ((-2*u[-1] + 2*u[-2]) / dx**2) + ((2*r_bound[0])/dx) + source[-1]
+    elif boundary == 'robin':
+        F[-1] = (-2*(1 + r_bound[1]*dx)*u[-1] + 2*u[-2]) / (dx**2) + ((2*r_bound[0])/dx) + source[-1]
+
+    return F
 
 
 def sparse_A(size, dm, do):
@@ -28,11 +55,11 @@ def sparse_A(size, dm, do):
 
 def solve_diffusion(method, boundary_type, l_bound_func, r_bound_func, r_bound_args, init_func, D, x_min, x_max, nx, t_min, t_max, nt, source_func=None, l_bound_args=None, init_args=None, source_args=None):
     """
-    Solves the heat equation using the input method and boundary conditions.
+    Solves the heat equation using finite difference methods, based on the input method and boundary conditions.
     ----------
     Parameters
     method : string
-        Either 'explicit_euler', 'implicit_euler', or 'crank_nicolson'.
+        Either 'root_rk4', 'explicit_euler', 'implicit_euler', or 'crank_nicolson'.
     boundary_type : string
         Either 'dirichlet', 'neumann', or 'robin'.
     l_bound_func : function
@@ -50,13 +77,13 @@ def solve_diffusion(method, boundary_type, l_bound_func, r_bound_func, r_bound_a
     x_max : float OR int
         Maximum x value.
     nx : int
-        Number of x values to solve across, affects step size used for x.
+        Number of x values in the grid, affects step size used for x.
     t_min : float OR int
         Minimum t value.
     t_max : float OR int
         Maximum t value.
     nt : int
-        Number of t values to solve across, affects step sized used for t.
+        Number of t values in the grid, affects step sized used for t.
     source_func : function
         Function that takes singular values (x, t) and list (args) as inputs and returns source value.
     l_bound_args : list OR numpy.ndarray
@@ -72,8 +99,8 @@ def solve_diffusion(method, boundary_type, l_bound_func, r_bound_func, r_bound_a
 
     # INPUT CHECKS
     input_checks.test_string(method, 'method')
-    if method not in ['explicit_euler', 'implicit_euler', 'crank_nicolson']:
-        raise Exception('Argument (method) must be either \'explicit_euler\', \'implicit_euler\', or \'crank_nicolson\'.')
+    if method not in ['root_rk4', 'explicit_euler', 'implicit_euler', 'crank_nicolson']:
+        raise Exception('Argument (method) must be either \'root_rk4\', \'explicit_euler\', \'implicit_euler\', or \'crank_nicolson\'.')
     input_checks.test_string(boundary_type, 'boundary_type')
     if boundary_type not in ['dirichlet', 'neumann', 'robin']:
         raise Exception('Argument (boundary_type) must be either \'dirichlet\', \'neumann\', or \'robin\'.')
@@ -99,21 +126,17 @@ def solve_diffusion(method, boundary_type, l_bound_func, r_bound_func, r_bound_a
     if source_args != None:
         input_checks.test_list_nparray(source_args, 'source_args')
 
-    # CHECK STABILITY CONDITION
+    # MEETING STABILITY CONDITION
     dx = (x_max - x_min) / nx
-    dt = (t_max - t_min) / nt
+    dt = 0.5*(dx**2)/D
     C = (dt * D) / (dx ** 2)
-
-    if method == 'explicit_euler':
-        if C > 0.5:
-            raise Exception('Stability condition not met.')
     
     # ADJUST SOURCE TERM
     if source_func == None:
         def source_func(x, t, u, args):
-            return 0
+            return np.zeros(np.size(x))
     
-    # CONSTRUCT ARRAYS
+    # CONSTRUCT GRIDS
     x_arr = np.linspace(x_min, x_max, nx+1)
     t_arr = np.linspace(t_min, t_max, nt+1)
     
@@ -151,7 +174,6 @@ def solve_diffusion(method, boundary_type, l_bound_func, r_bound_func, r_bound_a
     
     if boundary_type == 'robin':
         A_mat[size-1, size-2] *= 2
-        #A_mat[size-1, size-1] *= 1 + r_bound_func(x_max, 0, args=[0, r_bound_args[1]]) * dx
         A_mat[size-1, size-1] *= 1 + r_bound_args[1] * dx
         def make_b(t):
             b = np.zeros(size)
@@ -160,6 +182,9 @@ def solve_diffusion(method, boundary_type, l_bound_func, r_bound_func, r_bound_a
             return b + dt*source_func(x_arr[1:], t, u_t, source_args)
     
     # SOLVE
+    if method == 'root_rk4':
+        u_t = ode_solver.solve_to(findiff_problem, 'rk4', u_t, t_min, t_max, dt, args=[source_func(x_arr[1:size+1], 0, u_t, source_args), boundary_type, size, dx, l_bound_func(x_min, 0, l_bound_args), r_bound_args])[:,-1][:-1]
+
     if method == 'explicit_euler':
         for j in range(0, nt):
             b = make_b(t_arr[j])
@@ -182,3 +207,39 @@ def solve_diffusion(method, boundary_type, l_bound_func, r_bound_func, r_bound_a
         u_t = np.concatenate((np.array([l_bound_func(x_min, 0, l_bound_args)]), u_t))
 
     return np.vstack([u_t, x_arr])
+
+
+def diff_l_bound(x, t, args):
+    return 0
+
+
+def diff_r_bound(x, t, args):
+    delta, gamma = args
+    return delta - (gamma*x)
+
+
+def diff_init(x, t, args):
+    return 0.1*x
+
+
+def diff_source(x, t, u, args):
+    return np.ones(np.size(x))
+
+
+x_pred = solve_diffusion(
+    method='root_rk4', 
+    boundary_type='dirichlet', 
+    l_bound_func=diff_l_bound, 
+    r_bound_func=diff_r_bound, 
+    r_bound_args=[1, 0],
+    init_func=diff_init, 
+    D=1, 
+    x_min=0, 
+    x_max=1, 
+    nx=100, 
+    t_min=0, 
+    t_max=1, 
+    nt=1000,
+    init_args=[0, 5])
+
+plt.plot(x_pred[-1], x_pred[0])

@@ -192,3 +192,8 @@ hopfpseudo = numerical_continuation.pseudo_arclength(
 # %%
 plt.plot(hopfnat[-1], hopfnat[0])
 plt.plot(hopfpseudo[-1], hopfpseudo[0])
+plt.xlabel(r'$\beta$')
+plt.ylabel('$\dot{x}$')
+plt.title('Numerical Continuation on the Hopf Normal Equations')
+plt.legend(['Natural Parameter', 'Pseudo-arclength'])
+plt.grid()
