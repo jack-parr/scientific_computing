@@ -92,3 +92,39 @@ rk4_func1 = ode_solver.solve_to(func1, 'rk4', [1], 0, 1, 0.312572)
 rk4t2 = time.time()
 print(1000*(eulert2-eulert1))
 print(1000*(rk4t2-rk4t1))
+# %%
+# 1.2
+def pred_prey(x, t, args):
+    a, b, d = args
+    x1, x2 = x
+    dxdt = np.array([(x1*(1-x1)) - ((a*x1*x2)/(d+x1)), b*x2*(1-(x2/x1))])
+    return dxdt
+
+def pp_pc(x, args):
+    return pred_prey(x, 0, args)[1]
+
+args=[1, 0.2, 0.1]
+
+pporbit = numerical_shooting.orbit_shoot(
+    pred_prey,
+    [0.5, 0.5, 20],
+    phase_con=pp_pc,
+    func_args=args,
+    phase_args=args)
+print(pporbit)
+
+ppsol = ode_solver.solve_to(pred_prey, 'rk4', [pporbit[0],pporbit[1]], 0, pporbit[2], 0.01, args)
+plt.subplot(2,2,1)
+plt.plot(ppsol[-1], ppsol[0], ppsol[-1], ppsol[1])
+plt.xlabel('t')
+plt.title('(a)')
+plt.legend(['x', 'y'])
+plt.grid()
+plt.subplot(2,2,2)
+plt.plot(ppsol[0], ppsol[1])
+plt.xlabel('x')
+plt.ylabel('y')
+plt.title('(b)')
+plt.tight_layout()
+plt.grid()
+# %%
