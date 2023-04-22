@@ -128,3 +128,67 @@ plt.title('(b)')
 plt.tight_layout()
 plt.grid()
 # %%
+# 1.3 cubic
+def cubic(x, args):
+    c = args[0]
+    return x**3 - x + c
+
+cubicnat = numerical_continuation.natural_continuation(
+    cubic,
+    [5],
+    [-2],
+    0,
+    2,
+    100
+)
+
+cubicpseudo = numerical_continuation.pseudo_arclength(
+    cubic,
+    [5],
+    [-2],
+    0,
+    2,
+    100
+)
+
+plt.plot(cubicnat[-1], cubicnat[0])
+plt.plot(cubicpseudo[-1], cubicpseudo[0])
+plt.xlabel('c')
+plt.ylabel('Root')
+plt.title('Numerical Continuation on the Algebraic Cubic Equation')
+plt.legend(['Natural Parameter', 'Pseudo-arclength'])
+plt.grid()
+# %%
+# 1.3 hopf
+def hopf_normal(x, t, args):
+    b = args[0]
+    x1, x2 = x
+    return np.array([b*x1 - x2 - x1*(x1**2 + x2**2), x1 + b*x2 - x2*(x1**2 + x2**2)])
+
+def hopf_pc(x, args):
+    return hopf_normal(x, 0, args)[0]
+
+hopfnat = numerical_continuation.natural_continuation(
+    hopf_normal,
+    [1.4, 1, 6.3],
+    [2],
+    0,
+    -1,
+    50,
+    numerical_shooting.shooting_problem,
+    phase_con=hopf_pc
+)
+
+hopfpseudo = numerical_continuation.pseudo_arclength(
+    func=hopf_normal,
+    x0=[1.4, 1, 6.3],
+    init_args=[2],
+    vary_par_idx=0,
+    max_par=-1,
+    num_steps=50,
+    discretisation=numerical_shooting.shooting_problem,
+    phase_con=hopf_pc
+)
+# %%
+plt.plot(hopfnat[-1], hopfnat[0])
+plt.plot(hopfpseudo[-1], hopfpseudo[0])

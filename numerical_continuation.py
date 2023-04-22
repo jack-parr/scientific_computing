@@ -2,7 +2,17 @@ import numpy as np
 import scipy as sp
 import input_checks
 
-def natural_continuation(func, x0, init_args, vary_par_idx, max_par, num_steps, discretisation=(lambda x: x), solver=sp.optimize.fsolve):
+
+def make_args(phase_con, init_args, vary_par_idx, new_par):
+        init_args[vary_par_idx] = new_par
+        if phase_con != None:
+            args = (phase_con, init_args, init_args)
+        else:
+            args = (init_args)
+        return args
+
+
+def natural_continuation(func, x0, init_args, vary_par_idx, max_par, num_steps, discretisation=(lambda x: x), solver=sp.optimize.fsolve, phase_con=None):
     """
     Performs natural parameter continuation. Solves the function while varying the indicated parameter.
     ----------
@@ -23,6 +33,8 @@ def natural_continuation(func, x0, init_args, vary_par_idx, max_par, num_steps, 
         Function to be used to discretise the problem. Defaults to no adaptation.
     solver : function
         Function to be used to solve the root problem. Defaults to scipy's 'fsolve'.
+    phase_con : function
+        Function which returns the phase condition of the problem.
     ----------
     Returns
         A numpy.array with a row of values for each solved coordinate, and the final row being the varied parameter values solved at.
@@ -37,13 +49,15 @@ def natural_continuation(func, x0, init_args, vary_par_idx, max_par, num_steps, 
     input_checks.test_int(num_steps, 'num_steps')
     input_checks.test_function(discretisation, 'discretisation')
     input_checks.test_function(solver, 'solver')
+    if phase_con != None:
+        input_checks.test_function(phase_con, 'phase_con')
 
     u_stor = []
     pars = np.linspace(init_args[vary_par_idx], max_par, num_steps)
 
     for par in pars:
-        init_args[vary_par_idx] = par
-        root = solver(discretisation(func), x0, args=init_args)
+        new_args = make_args(phase_con, init_args, vary_par_idx, par)
+        root = solver(discretisation(func), x0, args=new_args)
         u_stor.append(root)
         x0 = root
 
@@ -89,14 +103,6 @@ def pseudo_arclength(func, x0, init_args, vary_par_idx, max_par, num_steps, disc
     input_checks.test_function(solver, 'solver')
     if phase_con != None:
         input_checks.test_function(phase_con, 'phase_con')
-
-    def make_args(phase_con, init_args, vary_par_idx, new_par):
-        init_args[vary_par_idx] = new_par
-        if phase_con != None:
-            args = (phase_con, init_args, init_args)
-        else:
-            args = (init_args)
-        return args
     
     pars = np.linspace(init_args[vary_par_idx], max_par, num_steps)
 
