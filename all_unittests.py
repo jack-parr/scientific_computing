@@ -177,6 +177,23 @@ class test_methods_numerical_continuation(unittest.TestCase):
         self.assertEqual(np.shape(x_pred), (2, 400))
         self.assertAlmostEqual(round(x_pred[0][-1], 3), 0.577)
         self.assertAlmostEqual(round(x_pred[1][-1], 3), 2.000)
+
+        x_pred = numerical_continuation.natural_continuation(
+            func=hopf_normal,
+            x0=[1.4, 1, 6.3],
+            init_args=[2],
+            vary_par_idx=0,
+            max_par=-1,
+            num_steps=50,
+            discretisation=numerical_shooting.shooting_problem,
+            solver=sp.optimize.fsolve,
+            phase_con=hopf_pc
+        )
+        self.assertEqual(np.shape(x_pred), (4, 50))
+        self.assertAlmostEqual(round(x_pred[0][-1], 3), 0.000)
+        self.assertAlmostEqual(round(x_pred[1][-1], 3), 0.000)
+        self.assertAlmostEqual(round(x_pred[2][-1], 3), 6.252)
+        self.assertAlmostEqual(round(x_pred[3][-1], 3), -1.000)
     
 
     def test_pseudo_arclength(self):
