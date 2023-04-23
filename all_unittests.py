@@ -5,6 +5,7 @@ import math
 import ode_solver
 import numerical_shooting
 import numerical_continuation
+import bvp_solver
 import pde_solver
 
 
@@ -33,6 +34,27 @@ def hopf_normal(x, t, args):
 
 def hopf_pc(x, args):
     return hopf_normal(x, 0, args)[0]
+
+
+def bvp_l_bound(x, args):
+    return 0
+
+
+def bvp_r_bound_dirichlet(x, args):
+    return 0
+
+
+def bvp_r_bound_robin(x, args):
+    delta, gamma = args
+    return delta - (gamma*x)
+
+
+def bvp_init(x, args):
+    return 0.1*x
+
+
+def bvp_source(x, u, args):
+    return 1
 
 
 def diff_l_bound(x, t, args):
@@ -235,6 +257,199 @@ class test_methods_numerical_continuation(unittest.TestCase):
         self.assertAlmostEqual(round(x_pred[3][-1], 3), 0.320)
 
 
+class test_methods_bvp_solver(unittest.TestCase):
+
+    def test_solve_bvp(self):
+        
+        # DIRICHLET BOUNDARY TYPE
+        x_pred = bvp_solver.solve_bvp(
+            method='scipy', 
+            boundary_type='dirichlet', 
+            l_bound_func=bvp_l_bound, 
+            r_bound_func=bvp_r_bound_dirichlet, 
+            init_func=bvp_init, 
+            D=1, 
+            x_min=0, 
+            x_max=1, 
+            nx=100, 
+            source_func=bvp_source
+            )
+        self.assertEqual(np.shape(x_pred), (2, 101))
+        self.assertEqual(x_pred[0][0], 0)
+        self.assertEqual(x_pred[0][-1], 0)
+        self.assertAlmostEqual(round(x_pred[0][10], 3), 0.045)
+        self.assertAlmostEqual(round(x_pred[0][-10], 3), 0.041)
+        self.assertAlmostEqual(round(x_pred[1][10], 3), 0.100)
+        self.assertAlmostEqual(round(x_pred[1][-10], 3), 0.910)
+
+        x_pred = bvp_solver.solve_bvp(
+            method='euler', 
+            boundary_type='dirichlet', 
+            l_bound_func=bvp_l_bound, 
+            r_bound_func=bvp_r_bound_dirichlet, 
+            init_func=bvp_init, 
+            D=1, 
+            x_min=0, 
+            x_max=1, 
+            nx=100, 
+            source_func=bvp_source
+            )
+        self.assertEqual(np.shape(x_pred), (2, 101))
+        self.assertEqual(x_pred[0][0], 0)
+        self.assertEqual(x_pred[0][-1], 0)
+        self.assertAlmostEqual(round(x_pred[0][10], 3), 0.045)
+        self.assertAlmostEqual(round(x_pred[0][-10], 3), 0.041)
+        self.assertAlmostEqual(round(x_pred[1][10], 3), 0.100)
+        self.assertAlmostEqual(round(x_pred[1][-10], 3), 0.910)
+
+        x_pred = bvp_solver.solve_bvp(
+            method='rk4', 
+            boundary_type='dirichlet', 
+            l_bound_func=bvp_l_bound, 
+            r_bound_func=bvp_r_bound_dirichlet, 
+            init_func=bvp_init, 
+            D=1, 
+            x_min=0, 
+            x_max=1, 
+            nx=100, 
+            source_func=bvp_source
+            )
+        self.assertEqual(np.shape(x_pred), (2, 101))
+        self.assertEqual(x_pred[0][0], 0)
+        self.assertEqual(x_pred[0][-1], 0)
+        self.assertAlmostEqual(round(x_pred[0][10], 3), 0.045)
+        self.assertAlmostEqual(round(x_pred[0][-10], 3), 0.041)
+        self.assertAlmostEqual(round(x_pred[1][10], 3), 0.100)
+        self.assertAlmostEqual(round(x_pred[1][-10], 3), 0.910)
+
+
+        # NEUMANN BOUNDARY TYPE
+        x_pred = bvp_solver.solve_bvp(
+            method='scipy', 
+            boundary_type='neumann', 
+            l_bound_func=bvp_l_bound, 
+            r_bound_func=bvp_r_bound_dirichlet, 
+            init_func=bvp_init, 
+            D=1, 
+            x_min=0, 
+            x_max=1, 
+            nx=100, 
+            source_func=bvp_source
+            )
+        self.assertEqual(np.shape(x_pred), (2, 101))
+        self.assertEqual(x_pred[0][0], 0)
+        self.assertAlmostEqual(round(x_pred[0][-1], 3), 0.500)
+        self.assertAlmostEqual(round(x_pred[0][10], 3), 0.095)
+        self.assertAlmostEqual(round(x_pred[0][-10], 3), 0.496)
+        self.assertAlmostEqual(round(x_pred[1][10], 3), 0.100)
+        self.assertAlmostEqual(round(x_pred[1][-10], 3), 0.910)
+
+        x_pred = bvp_solver.solve_bvp(
+            method='euler', 
+            boundary_type='neumann', 
+            l_bound_func=bvp_l_bound, 
+            r_bound_func=bvp_r_bound_dirichlet, 
+            init_func=bvp_init, 
+            D=1, 
+            x_min=0, 
+            x_max=1, 
+            nx=100, 
+            source_func=bvp_source
+            )
+        self.assertEqual(np.shape(x_pred), (2, 101))
+        self.assertEqual(x_pred[0][0], 0)
+        self.assertAlmostEqual(round(x_pred[0][-1], 3), 0.497)
+        self.assertAlmostEqual(round(x_pred[0][10], 3), 0.095)
+        self.assertAlmostEqual(round(x_pred[0][-10], 3), 0.493)
+        self.assertAlmostEqual(round(x_pred[1][10], 3), 0.100)
+        self.assertAlmostEqual(round(x_pred[1][-10], 3), 0.910)
+
+        x_pred = bvp_solver.solve_bvp(
+            method='rk4', 
+            boundary_type='neumann', 
+            l_bound_func=bvp_l_bound, 
+            r_bound_func=bvp_r_bound_dirichlet, 
+            init_func=bvp_init, 
+            D=1, 
+            x_min=0, 
+            x_max=1, 
+            nx=100, 
+            source_func=bvp_source
+            )
+        self.assertEqual(np.shape(x_pred), (2, 101))
+        self.assertEqual(x_pred[0][0], 0)
+        self.assertAlmostEqual(round(x_pred[0][-1], 3), 0.497)
+        self.assertAlmostEqual(round(x_pred[0][10], 3), 0.095)
+        self.assertAlmostEqual(round(x_pred[0][-10], 3), 0.493)
+        self.assertAlmostEqual(round(x_pred[1][10], 3), 0.100)
+        self.assertAlmostEqual(round(x_pred[1][-10], 3), 0.910)
+
+
+        # ROBIN BOUNDARY TYPE
+        x_pred = bvp_solver.solve_bvp(
+            method='scipy', 
+            boundary_type='robin', 
+            l_bound_func=bvp_l_bound, 
+            r_bound_func=bvp_r_bound_dirichlet, 
+            init_func=bvp_init, 
+            D=1, 
+            x_min=0, 
+            x_max=1, 
+            nx=100,
+            r_bound_args=[0, 0],
+            source_func=bvp_source
+            )
+        self.assertEqual(np.shape(x_pred), (2, 101))
+        self.assertEqual(x_pred[0][0], 0)
+        self.assertAlmostEqual(round(x_pred[0][-1], 3), 0.500)
+        self.assertAlmostEqual(round(x_pred[0][10], 3), 0.095)
+        self.assertAlmostEqual(round(x_pred[0][-10], 3), 0.496)
+        self.assertAlmostEqual(round(x_pred[1][10], 3), 0.100)
+        self.assertAlmostEqual(round(x_pred[1][-10], 3), 0.910)
+
+        x_pred = bvp_solver.solve_bvp(
+            method='euler', 
+            boundary_type='robin', 
+            l_bound_func=bvp_l_bound, 
+            r_bound_func=bvp_r_bound_dirichlet, 
+            init_func=bvp_init, 
+            D=1, 
+            x_min=0, 
+            x_max=1, 
+            nx=100,
+            r_bound_args=[0, 0],
+            source_func=bvp_source
+            )
+        self.assertEqual(np.shape(x_pred), (2, 101))
+        self.assertEqual(x_pred[0][0], 0)
+        self.assertAlmostEqual(round(x_pred[0][-1], 3), 0.497)
+        self.assertAlmostEqual(round(x_pred[0][10], 3), 0.095)
+        self.assertAlmostEqual(round(x_pred[0][-10], 3), 0.493)
+        self.assertAlmostEqual(round(x_pred[1][10], 3), 0.100)
+        self.assertAlmostEqual(round(x_pred[1][-10], 3), 0.910)
+
+        x_pred = bvp_solver.solve_bvp(
+            method='rk4', 
+            boundary_type='robin', 
+            l_bound_func=bvp_l_bound, 
+            r_bound_func=bvp_r_bound_dirichlet, 
+            init_func=bvp_init, 
+            D=1, 
+            x_min=0, 
+            x_max=1, 
+            nx=100,
+            r_bound_args=[0, 0],
+            source_func=bvp_source
+            )
+        self.assertEqual(np.shape(x_pred), (2, 101))
+        self.assertEqual(x_pred[0][0], 0)
+        self.assertAlmostEqual(round(x_pred[0][-1], 3), 0.497)
+        self.assertAlmostEqual(round(x_pred[0][10], 3), 0.095)
+        self.assertAlmostEqual(round(x_pred[0][-10], 3), 0.493)
+        self.assertAlmostEqual(round(x_pred[1][10], 3), 0.100)
+        self.assertAlmostEqual(round(x_pred[1][-10], 3), 0.910)
+
+
 class test_methods_pde_solver(unittest.TestCase):
 
     def test_solve_diffusion(self):
@@ -257,8 +472,8 @@ class test_methods_pde_solver(unittest.TestCase):
         self.assertEqual(np.shape(x_pred), (2, 101))
         self.assertEqual(x_pred[0][0], 0)
         self.assertEqual(x_pred[0][-1], 0)
-        self.assertAlmostEqual(round(x_pred[0][10], 3), 0.241)
-        self.assertAlmostEqual(round(x_pred[0][-10], 3), 0.218)
+        self.assertAlmostEqual(round(x_pred[0][10], 3), 0.208)
+        self.assertAlmostEqual(round(x_pred[0][-10], 3), 0.188)
         self.assertAlmostEqual(round(x_pred[1][10], 3), 0.500)
         self.assertAlmostEqual(round(x_pred[1][-10], 3), 4.550)
 
@@ -279,8 +494,8 @@ class test_methods_pde_solver(unittest.TestCase):
         self.assertEqual(np.shape(x_pred), (2, 101))
         self.assertEqual(x_pred[0][0], 0)
         self.assertEqual(x_pred[0][-1], 0)
-        self.assertAlmostEqual(round(x_pred[0][10], 3), 0.241)
-        self.assertAlmostEqual(round(x_pred[0][-10], 3), 0.218)
+        self.assertAlmostEqual(round(x_pred[0][10], 3), 0.208)
+        self.assertAlmostEqual(round(x_pred[0][-10], 3), 0.188)
         self.assertAlmostEqual(round(x_pred[1][10], 3), 0.500)
         self.assertAlmostEqual(round(x_pred[1][-10], 3), 4.550)
 
@@ -301,8 +516,8 @@ class test_methods_pde_solver(unittest.TestCase):
         self.assertEqual(np.shape(x_pred), (2, 101))
         self.assertEqual(x_pred[0][0], 0)
         self.assertEqual(x_pred[0][-1], 0)
-        self.assertAlmostEqual(round(x_pred[0][10], 3), 0.241)
-        self.assertAlmostEqual(round(x_pred[0][-10], 3), 0.218)
+        self.assertAlmostEqual(round(x_pred[0][10], 3), 0.208)
+        self.assertAlmostEqual(round(x_pred[0][-10], 3), 0.188)
         self.assertAlmostEqual(round(x_pred[1][10], 3), 0.500)
         self.assertAlmostEqual(round(x_pred[1][-10], 3), 4.550)
 
@@ -324,9 +539,9 @@ class test_methods_pde_solver(unittest.TestCase):
             init_args=[0, 5])
         self.assertEqual(np.shape(x_pred), (2, 101))
         self.assertEqual(x_pred[0][0], 0)
-        self.assertAlmostEqual(round(x_pred[0][-1], 3), 0.477)
-        self.assertAlmostEqual(round(x_pred[0][10], 3), 0.241)
-        self.assertAlmostEqual(round(x_pred[0][-10], 3), 0.502)
+        self.assertAlmostEqual(round(x_pred[0][-1], 3), 0.549)
+        self.assertAlmostEqual(round(x_pred[0][10], 3), 0.209)
+        self.assertAlmostEqual(round(x_pred[0][-10], 3), 0.562)
         self.assertAlmostEqual(round(x_pred[1][10], 3), 0.500)
         self.assertAlmostEqual(round(x_pred[1][-10], 3), 4.550)
 
@@ -346,9 +561,9 @@ class test_methods_pde_solver(unittest.TestCase):
             init_args=[0, 5])
         self.assertEqual(np.shape(x_pred), (2, 101))
         self.assertEqual(x_pred[0][0], 0)
-        self.assertAlmostEqual(round(x_pred[0][-1], 3), 0.477)
-        self.assertAlmostEqual(round(x_pred[0][10], 3), 0.241)
-        self.assertAlmostEqual(round(x_pred[0][-10], 3), 0.502)
+        self.assertAlmostEqual(round(x_pred[0][-1], 3), 0.549)
+        self.assertAlmostEqual(round(x_pred[0][10], 3), 0.209)
+        self.assertAlmostEqual(round(x_pred[0][-10], 3), 0.562)
         self.assertAlmostEqual(round(x_pred[1][10], 3), 0.500)
         self.assertAlmostEqual(round(x_pred[1][-10], 3), 4.550)
 
@@ -368,9 +583,9 @@ class test_methods_pde_solver(unittest.TestCase):
             init_args=[0, 5])
         self.assertEqual(np.shape(x_pred), (2, 101))
         self.assertEqual(x_pred[0][0], 0)
-        self.assertAlmostEqual(round(x_pred[0][-1], 3), 0.477)
-        self.assertAlmostEqual(round(x_pred[0][10], 3), 0.241)
-        self.assertAlmostEqual(round(x_pred[0][-10], 3), 0.502)
+        self.assertAlmostEqual(round(x_pred[0][-1], 3), 0.549)
+        self.assertAlmostEqual(round(x_pred[0][10], 3), 0.209)
+        self.assertAlmostEqual(round(x_pred[0][-10], 3), 0.562)
         self.assertAlmostEqual(round(x_pred[1][10], 3), 0.500)
         self.assertAlmostEqual(round(x_pred[1][-10], 3), 4.550)
 
@@ -393,9 +608,9 @@ class test_methods_pde_solver(unittest.TestCase):
             init_args=[0, 5])
         self.assertEqual(np.shape(x_pred), (2, 101))
         self.assertEqual(x_pred[0][0], 0)
-        self.assertAlmostEqual(round(x_pred[0][-1], 3), 0.178)
-        self.assertAlmostEqual(round(x_pred[0][10], 3), 0.241)
-        self.assertAlmostEqual(round(x_pred[0][-10], 3), 0.337)
+        self.assertAlmostEqual(round(x_pred[0][-1], 3), 0.169)
+        self.assertAlmostEqual(round(x_pred[0][10], 3), 0.208)
+        self.assertAlmostEqual(round(x_pred[0][-10], 3), 0.317)
         self.assertAlmostEqual(round(x_pred[1][10], 3), 0.500)
         self.assertAlmostEqual(round(x_pred[1][-10], 3), 4.550)
 
@@ -416,9 +631,9 @@ class test_methods_pde_solver(unittest.TestCase):
             init_args=[0, 5])
         self.assertEqual(np.shape(x_pred), (2, 101))
         self.assertEqual(x_pred[0][0], 0)
-        self.assertAlmostEqual(round(x_pred[0][-1], 3), 0.178)
-        self.assertAlmostEqual(round(x_pred[0][10], 3), 0.241)
-        self.assertAlmostEqual(round(x_pred[0][-10], 3), 0.337)
+        self.assertAlmostEqual(round(x_pred[0][-1], 3), 0.169)
+        self.assertAlmostEqual(round(x_pred[0][10], 3), 0.208)
+        self.assertAlmostEqual(round(x_pred[0][-10], 3), 0.317)
         self.assertAlmostEqual(round(x_pred[1][10], 3), 0.500)
         self.assertAlmostEqual(round(x_pred[1][-10], 3), 4.550)
 
@@ -439,9 +654,9 @@ class test_methods_pde_solver(unittest.TestCase):
             init_args=[0, 5])
         self.assertEqual(np.shape(x_pred), (2, 101))
         self.assertEqual(x_pred[0][0], 0)
-        self.assertAlmostEqual(round(x_pred[0][-1], 3), 0.178)
-        self.assertAlmostEqual(round(x_pred[0][10], 3), 0.241)
-        self.assertAlmostEqual(round(x_pred[0][-10], 3), 0.337)
+        self.assertAlmostEqual(round(x_pred[0][-1], 3), 0.169)
+        self.assertAlmostEqual(round(x_pred[0][10], 3), 0.208)
+        self.assertAlmostEqual(round(x_pred[0][-10], 3), 0.317)
         self.assertAlmostEqual(round(x_pred[1][10], 3), 0.500)
         self.assertAlmostEqual(round(x_pred[1][-10], 3), 4.550)
 

@@ -7,41 +7,50 @@ import ode_solver as solve_ode
 import numerical_shooting as shooting
 import numerical_continuation as num_con
 import pde_solver
+import bvp_solver
 # %%
 # BVP SOLVER
-def l_bound(x, args):
+def bvp_l_bound(x, args):
     return 0
 
 
-def r_bound_dirichlet(x, args):
-    return 1
+def bvp_r_bound_dirichlet(x, args):
+    return 0
 
-def r_bound_robin(x, args):
+def bvp_r_bound_robin(x, args):
     delta, gamma = args
     return delta - (gamma*x)
 
 
-def init(x, args):
+def bvp_init(x, args):
     return 0.1*x
 
 
-def source(x, u, args):
-    return np.ones(np.size(x))
+def bvp_source(x, u, args):
+    return 1
 
 
-x_pred = solve_bvp(
+x_pred = bvp_solver.solve_bvp(
     method='rk4', 
     boundary_type='dirichlet', 
-    l_bound_func=l_bound, 
-    r_bound_func=r_bound_dirichlet, 
-    init_func=init, 
+    l_bound_func=bvp_l_bound, 
+    r_bound_func=bvp_r_bound_robin, 
+    init_func=bvp_init, 
     D=1, 
     x_min=0, 
     x_max=1, 
     nx=100, 
+    source_func=bvp_source,
+    r_bound_args=[0, 0]
     )
 
+def bvp_true(x, D, a, b, gamma1, gamma2):
+    return (-1/(2*D)) * (x-a) * (x-b) + ((gamma2-gamma1)/(b-a)) * (x-a) + gamma1
+
+x_true = bvp_true(x_pred[-1], 1, 0, 1, 0, 0)
+
 plt.plot(x_pred[-1], x_pred[0])
+#plt.plot(x_pred[-1], x_true)
 # %%
 def diff_l_bound(x, t, args):
     return 0
@@ -67,8 +76,8 @@ def diff_source(x_arr, t, u, args):
     return np.ones(shape=len(x_arr)) * (math.e**(u * mu))
 # %%
 x_pred = pde_solver.solve_diffusion(
-            method='crank_nicolson', 
-            boundary_type='neumann', 
+            method='explicit_euler', 
+            boundary_type='dirichlet', 
             l_bound_func=diff_l_bound, 
             r_bound_func=diff_r_bound_dirneu, 
             init_func=diff_init, 

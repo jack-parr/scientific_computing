@@ -104,7 +104,7 @@ def solve_diffusion(method, boundary_type, l_bound_func, r_bound_func, init_func
 
     # MEETING STABILITY CONDITION
     dx = (x_max - x_min) / nx
-    dt = 0.25*(dx**2)/D
+    dt = 0.4*(dx**2)/D
     C = (dt * D) / (dx ** 2)
     if C > 0.5:
         raise Exception('Error when adjusting (dt) to meet stability condition.')
