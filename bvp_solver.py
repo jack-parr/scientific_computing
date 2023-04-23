@@ -5,8 +5,13 @@ import matplotlib.pyplot as plt
 import ode_solver
 import input_checks
 
+
 def solve_bvp(method, boundary_type, l_bound_func, r_bound_func, init_func, D, x_min, x_max, nx, source_func=None, l_bound_args=None, r_bound_args=None, init_args=None, source_args=None):
 
+    # INPUT CHECKS
+    if method not in ['scipy', 'euler', 'rk4']:
+        raise Exception('Argument (method) must be either \'scipy\', \'euler\', or \'rk4\'.')
+    
     # ADJUST SOURCE TERM
     if source_func == None:
         def source_func(x, u, args):
@@ -33,7 +38,7 @@ def solve_bvp(method, boundary_type, l_bound_func, r_bound_func, init_func, D, x
         elif boundary_type == 'robin':
             F[-1] = (-2*(1 + r_bound_args[1]*dx)*u[-1] + 2*u[-2]) / (dx**2) + ((2*r_bound_args[0])/dx)
 
-        return D*F + source_func(x_arr[1:size+1], t, u_t, source_args)
+        return D*F + source_func(x_arr[1:size+1], u_t, source_args)
 
 
     dx = (x_max - x_min) / nx
@@ -49,8 +54,10 @@ def solve_bvp(method, boundary_type, l_bound_func, r_bound_func, init_func, D, x
         u_t = init_func(x_arr[1:], init_args)
 
     # SOLVE
-    if method == 'rk4':
-        u_t = ode_solver.solve_to(findiff_problem, 'rk4', u_t, 0, 1, dt)[:,-1][:-1]
+    if method == 'scipy':
+        1
+    else:
+        u_t = ode_solver.solve_to(findiff_problem, method, u_t, 0, 1, dt)[:,-1][:-1]
     
     # ADD BOUNDARIES
     if boundary_type == 'dirichlet':
