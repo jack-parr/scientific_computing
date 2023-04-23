@@ -9,17 +9,40 @@ import input_checks
 def solve_bvp(method, boundary_type, l_bound_func, r_bound_func, init_func, D, x_min, x_max, nx, source_func=None, l_bound_args=None, r_bound_args=None, init_args=None, source_args=None):
 
     # INPUT CHECKS
+    input_checks.test_string(method, 'method')
     if method not in ['scipy', 'euler', 'rk4']:
         raise Exception('Argument (method) must be either \'scipy\', \'euler\', or \'rk4\'.')
+    input_checks.test_string(boundary_type, 'boundary_type')
+    if boundary_type not in ['dirichlet', 'neumann', 'robin']:
+        raise Exception('Argument (boundary_type) must be either \'dirichlet\', \'neumann\', or \'robin\'.')
+    input_checks.test_function(l_bound_func, 'l_bound_func')
+    input_checks.test_function(r_bound_func, 'r_bound_func')
+    input_checks.test_function(init_func, 'init_func')
+    input_checks.test_float_int(D, 'D')
+    input_checks.test_float_int(x_min, 'x_min')
+    input_checks.test_float_int(x_max, 'x_max')
+    input_checks.test_int(nx, 'nx')
+    if source_func != None:
+        input_checks.test_function(source_func, 'source_func')
+    if l_bound_args != None:
+        input_checks.test_list_nparray(l_bound_args, 'l_bound_args')
+    if r_bound_args != None:
+        input_checks.test_list_nparray(r_bound_args, 'r_bound_args')
+    if boundary_type == 'robin':
+        if len(r_bound_args) != 2:
+            raise Exception('Argument (r_bound_args) must contain two values.')
+    if init_args != None:
+        input_checks.test_list_nparray(init_args, 'init_args')
+    if source_args != None:
+        input_checks.test_list_nparray(source_args, 'source_args')
     
     # ADJUST SOURCE TERM
     if source_func == None:
         def source_func(x, u, args):
             return np.zeros(np.size(x))
     
-
     # DEFINE FUNCTION FOR SOLVER
-    def findiff_problem(u, t, args):
+    def findiff_problem(u, t=None, args=None):
     
         F = np.zeros(size)
 
@@ -41,11 +64,15 @@ def solve_bvp(method, boundary_type, l_bound_func, r_bound_func, init_func, D, x
         return D*F + source_func(x_arr[1:size+1], u_t, source_args)
 
 
+    # MEETING STABILITY CONDITION
     dx = (x_max - x_min) / nx
-    dt = 0.5*(dx**2)/D
-    x_arr = np.linspace(x_min, x_max, nx+1)
+    dt = 0.25*(dx**2)/D
+    C = (dt * D) / (dx ** 2)
+    if C > 0.5:
+        raise Exception('Error when adjusting (dt) to meet stability condition.')
 
     # INITIALISE
+    x_arr = np.linspace(x_min, x_max, nx+1)
     if boundary_type == 'dirichlet':
         size = nx-1
         u_t = init_func(x_arr[1:nx], init_args)
@@ -55,9 +82,11 @@ def solve_bvp(method, boundary_type, l_bound_func, r_bound_func, init_func, D, x
 
     # SOLVE
     if method == 'scipy':
-        1
+        u_t = sp.optimize.root(findiff_problem, u_t)
+        print(u_t.message)
+        u_t = u_t.x
     else:
-        u_t = ode_solver.solve_to(findiff_problem, method, u_t, 0, 1, dt)[:,-1][:-1]
+        u_t = ode_solver.solve_to(findiff_problem, method, u_t, 0, 2, dt)[:,-1][:-1]
     
     # ADD BOUNDARIES
     if boundary_type == 'dirichlet':
@@ -73,7 +102,7 @@ def l_bound(x, args):
 
 
 def r_bound_dirichlet(x, args):
-    return 0
+    return 1
 
 def r_bound_robin(x, args):
     delta, gamma = args
@@ -96,9 +125,8 @@ x_pred = solve_bvp(
     init_func=init, 
     D=1, 
     x_min=0, 
-    x_max=2, 
+    x_max=1, 
     nx=100, 
-    init_args=[0, 5])
+    )
 
-print(np.shape(x_pred))
 plt.plot(x_pred[-1], x_pred[0])
