@@ -21,11 +21,8 @@ def sparse_A(size, dm, do):
         A scipy sparse csr_matrix.
     """
 
-    data = np.concatenate((dm*np.ones(size), do*np.ones(2*(size-1))))
-    row_idx = np.concatenate((np.arange(0, size), np.arange(0, size-1), np.arange(1, size)))
-    col_idx = np.concatenate((np.arange(0, size), np.arange(1, size), np.arange(0, size-1)))
-
-    return sp.sparse.csr_matrix((data, (row_idx, col_idx)), shape=(size,size))
+    diagonals = [np.ones(size)*dm, np.ones(size-1)*do, np.ones(size-1)*do]
+    return sp.sparse.diags(diagonals, [0, 1, -1], format='csr')
 
 
 def full_A(size, dm, do):
@@ -43,6 +40,7 @@ def full_A(size, dm, do):
     Returns
         A np.ndarray tridiagonal matrix.
     """
+    
     return np.diag(np.ones(size)*dm, 0) + np.diag(np.ones(size-1)*do, 1) + np.diag(np.ones(size-1)*do, -1)
 
 

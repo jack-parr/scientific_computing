@@ -320,7 +320,7 @@ def diff_r_bound_rob(x, t, args):
 def diff_init(x, t, args):
     y = np.sin(np.pi * x)
     return y
-
+# %%
 xmol = pde_solver.solve_diffusion(
             method='lines', 
             boundary_type='dirichlet', 
@@ -336,6 +336,7 @@ xmol = pde_solver.solve_diffusion(
             nt=200, 
             use_sparse=False
             )
+
 xee = pde_solver.solve_diffusion(
             method='explicit_euler', 
             boundary_type='dirichlet', 
@@ -351,6 +352,7 @@ xee = pde_solver.solve_diffusion(
             nt=200, 
             use_sparse=False
             )
+
 xie = pde_solver.solve_diffusion(
             method='implicit_euler', 
             boundary_type='dirichlet', 
@@ -366,6 +368,7 @@ xie = pde_solver.solve_diffusion(
             nt=200, 
             use_sparse=False
             )
+
 xcn = pde_solver.solve_diffusion(
             method='crank_nicolson', 
             boundary_type='dirichlet', 
@@ -392,3 +395,36 @@ plt.ylabel('u(x,2)')
 plt.title('Solving the Linear Diffusion PDE')
 plt.legend(['Method of Lines', 'Explicit Euler', 'Implicit Euler', 'Crank-Nicolson', 'u(0.5,2) Exact'])
 plt.grid()
+# %%
+methods = ['lines', 'explicit_euler', 'implicit_euler', 'crank_nicolson']
+sparses = [False, True]
+
+t_stor = []
+for m in methods:
+    m_stor = []
+    for s in sparses:
+        t1 = time.time()
+        xmol = pde_solver.solve_diffusion(
+            method=m, 
+            boundary_type='dirichlet', 
+            l_bound_func=diff_l_bound, 
+            r_bound_func=diff_r_bound_dirneu, 
+            init_func=diff_init, 
+            D=0.1, 
+            x_min=0, 
+            x_max=1, 
+            nx=100, 
+            t_min=0, 
+            t_max=2, 
+            nt=200, 
+            use_sparse=s
+            )
+        t2 = time.time()
+        print(s)
+        print(t2-t1)
+        m_stor.append(t2-t1)
+    t_stor.append(m_stor)
+    print('-----------')
+
+ts = np.array(t_stor)
+print(t_stor)
