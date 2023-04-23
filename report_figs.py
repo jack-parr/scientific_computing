@@ -334,6 +334,7 @@ xmol = pde_solver.solve_diffusion(
             t_min=0, 
             t_max=2, 
             nt=200, 
+            use_sparse=False
             )
 xee = pde_solver.solve_diffusion(
             method='explicit_euler', 
@@ -348,6 +349,7 @@ xee = pde_solver.solve_diffusion(
             t_min=0, 
             t_max=2, 
             nt=200, 
+            use_sparse=False
             )
 xie = pde_solver.solve_diffusion(
             method='implicit_euler', 
@@ -362,6 +364,7 @@ xie = pde_solver.solve_diffusion(
             t_min=0, 
             t_max=2, 
             nt=200, 
+            use_sparse=False
             )
 xcn = pde_solver.solve_diffusion(
             method='crank_nicolson', 
@@ -376,6 +379,7 @@ xcn = pde_solver.solve_diffusion(
             t_min=0, 
             t_max=2, 
             nt=200, 
+            use_sparse=False
             )
 
 plt.plot(xmol[-1], xmol[0])
@@ -388,22 +392,3 @@ plt.ylabel('u(x,2)')
 plt.title('Solving the Linear Diffusion PDE')
 plt.legend(['Method of Lines', 'Explicit Euler', 'Implicit Euler', 'Crank-Nicolson', 'u(0.5,2) Exact'])
 plt.grid()
-# %%
-x_pred = pde_solver.solve_diffusion(
-    method='explicit_euler', 
-    boundary_type='dirichlet', 
-    l_bound_func=bratu_l_bound, 
-    r_bound_func=bratu_r_bound, 
-    init_func=bratu_init, 
-    D=1, 
-    x_min=0, 
-    x_max=1, 
-    nx=100, 
-    t_min=0,
-    t_max=1 ,
-    nt=100,
-    source_func=bratu_source,
-    init_args=[1, 0, 1, 0, 0],
-    source_args=[0.1]
-    )
-plt.plot(x_pred[-1], x_pred[0])

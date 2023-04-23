@@ -1,3 +1,4 @@
+# %%
 import scipy as sp
 import numpy as np
 import math
@@ -27,7 +28,25 @@ def sparse_A(size, dm, do):
     return sp.sparse.csr_matrix((data, (row_idx, col_idx)), shape=(size,size))
 
 
-def solve_diffusion(method, boundary_type, l_bound_func, r_bound_func, init_func, D, x_min, x_max, nx, t_min, t_max, nt, source_func=None, l_bound_args=None, r_bound_args=None, init_args=None, source_args=None):
+def full_A(size, dm, do):
+    """
+    Creates a tridiagonal matrix.
+    ----------
+    Parameters
+    size : int
+        The square dimension value of the matrix. 
+    dm : float OR int
+        Value along the main diagonal.
+    do : float OR int
+        Value along both the offset diagonals.
+    ----------
+    Returns
+        A np.ndarray tridiagonal matrix.
+    """
+    return np.diag(np.ones(size)*dm, 0) + np.diag(np.ones(size-1)*do, 1) + np.diag(np.ones(size-1)*do, -1)
+
+
+def solve_diffusion(method, boundary_type, l_bound_func, r_bound_func, init_func, D, x_min, x_max, nx, t_min, t_max, nt, source_func=None, l_bound_args=None, r_bound_args=None, init_args=None, source_args=None, use_sparse=True):
     """
     Solves the diffusion equation using finite difference methods, based on the input method and boundary conditions.
     ----------
@@ -66,6 +85,8 @@ def solve_diffusion(method, boundary_type, l_bound_func, r_bound_func, init_func
         Additional arguments needed by 'init_func'.
     source_args : list OR numpy.ndarray
         Additional arguments needed by 'source_func'.
+    use_sparse : bool
+        True indicates that sparse matrices are used for calculations.
     ----------
     Returns
         A numpy.array with a row of values for each solved parameter, and the final row being the x-values solved at.
@@ -101,6 +122,8 @@ def solve_diffusion(method, boundary_type, l_bound_func, r_bound_func, init_func
         input_checks.test_list_nparray(init_args, 'init_args')
     if source_args != None:
         input_checks.test_list_nparray(source_args, 'source_args')
+    if use_sparse not in [True, False]:
+        raise Exception('Argument (use_sparse) must be a boolean True or False.')
 
     # MEETING STABILITY CONDITION
     dx = (x_max - x_min) / nx
@@ -132,9 +155,13 @@ def solve_diffusion(method, boundary_type, l_bound_func, r_bound_func, init_func
         size = nx
         u_t = init_func(x_arr[1:], 0, init_args)
 
-    # CREATE SPARSE MATRICES
-    I_mat = sp.sparse.identity(size, format='csr')
-    A_mat = sparse_A(size, -2, 1)
+    # CREATE MATRICES
+    if use_sparse == True:
+        I_mat = sp.sparse.identity(size, format='csr')
+        A_mat = sparse_A(size, -2, 1)
+    elif use_sparse == False:
+        I_mat = np.identity(size)
+        A_mat = full_A(size, -2, 1)
     
     # DEFINE RHS VECTOR AND MODIFY SPARSE MATRICIES ACCORDING TO BOUNDARY CONDITIONS
     if boundary_type == 'dirichlet':
@@ -162,6 +189,11 @@ def solve_diffusion(method, boundary_type, l_bound_func, r_bound_func, init_func
             return b + dt*source_func(x_arr[1:], t, u_t, source_args)
     
     # SOLVE
+    if use_sparse == True:
+        solver = sp.sparse.linalg.spsolve
+    elif use_sparse == False:
+        solver = np.linalg.solve
+
     if method == 'lines':
         def PDE(t, u, A_mat, b_mat):
             return C * (A_mat@u + b_mat)
@@ -173,22 +205,22 @@ def solve_diffusion(method, boundary_type, l_bound_func, r_bound_func, init_func
     if method == 'explicit_euler':
         for j in range(0, nt):
             b = make_b(t_arr[j])
-            u_t += sp.sparse.linalg.spsolve(I_mat, C*(A_mat@u_t + b))
+            u_t += solver(I_mat, C*(A_mat@u_t + b))
     
     if method == 'implicit_euler':
         for j in range(0, nt):
             b = make_b(t_arr[j])
-            u_t = sp.sparse.linalg.spsolve(I_mat - (C*A_mat), u_t + (C*b))
+            u_t = solver(I_mat - (C*A_mat), u_t + (C*b))
     
     if method == 'crank_nicolson':
         for j in range(0, nt):
             b = make_b(t_arr[j])
-            u_t = sp.sparse.linalg.spsolve(I_mat - ((C/2)*A_mat), (I_mat + ((C/2)*A_mat))@u_t + (C*b))
+            u_t = solver(I_mat - ((C/2)*A_mat), (I_mat + ((C/2)*A_mat))@u_t + (C*b))
     
     if method == 'imex':
         for j in range(0, nt):
             b = make_b(t_arr[j])
-            u_t = sp.sparse.linalg.spsolve(I_mat - (C*A_mat), u_t + (C*b))
+            u_t = solver(I_mat - (C*A_mat), u_t + (C*b))
 
     # MODIFY u_t ACCORDING TO BOUNDARY CONDITIONS
     if boundary_type == 'dirichlet':
