@@ -7,7 +7,41 @@ import ode_solver as solve_ode
 import numerical_shooting as shooting
 import numerical_continuation as num_con
 import pde_solver
+# %%
+# BVP SOLVER
+def l_bound(x, args):
+    return 0
 
+
+def r_bound_dirichlet(x, args):
+    return 1
+
+def r_bound_robin(x, args):
+    delta, gamma = args
+    return delta - (gamma*x)
+
+
+def init(x, args):
+    return 0.1*x
+
+
+def source(x, u, args):
+    return np.ones(np.size(x))
+
+
+x_pred = solve_bvp(
+    method='rk4', 
+    boundary_type='dirichlet', 
+    l_bound_func=l_bound, 
+    r_bound_func=r_bound_dirichlet, 
+    init_func=init, 
+    D=1, 
+    x_min=0, 
+    x_max=1, 
+    nx=100, 
+    )
+
+plt.plot(x_pred[-1], x_pred[0])
 # %%
 def diff_l_bound(x, t, args):
     return 0

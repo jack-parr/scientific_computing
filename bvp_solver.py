@@ -1,7 +1,5 @@
-# %%
 import scipy as sp
 import numpy as np
-import matplotlib.pyplot as plt
 import ode_solver
 import input_checks
 
@@ -131,38 +129,3 @@ def solve_bvp(method, boundary_type, l_bound_func, r_bound_func, init_func, D, x
         u_t = np.concatenate((np.array([l_bound_func(x_min, l_bound_args)]), u_t))
 
     return np.vstack([u_t, x_arr])
-
-
-def l_bound(x, args):
-    return 0
-
-
-def r_bound_dirichlet(x, args):
-    return 1
-
-def r_bound_robin(x, args):
-    delta, gamma = args
-    return delta - (gamma*x)
-
-
-def init(x, args):
-    return 0.1*x
-
-
-def source(x, u, args):
-    return np.ones(np.size(x))
-
-
-x_pred = solve_bvp(
-    method='rk4', 
-    boundary_type='dirichlet', 
-    l_bound_func=l_bound, 
-    r_bound_func=r_bound_dirichlet, 
-    init_func=init, 
-    D=1, 
-    x_min=0, 
-    x_max=1, 
-    nx=100, 
-    )
-
-plt.plot(x_pred[-1], x_pred[0])
