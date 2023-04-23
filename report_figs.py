@@ -6,7 +6,6 @@ import time
 import ode_solver
 import numerical_shooting
 import numerical_continuation
-import method_of_lines
 import pde_solver
 # %%
 # 1.1 simple
@@ -198,7 +197,7 @@ plt.title('Numerical Continuation on the Hopf Normal Equations')
 plt.legend(['Natural Parameter', 'Pseudo-arclength'])
 plt.grid()
 # %%
-# 1.4 bratu
+# NOT USED bratu
 def bratu_l_bound(x, args):
     return 0
 
@@ -271,7 +270,7 @@ plt.title('Solution of Bratu with $\mu$ = 0.1')
 plt.legend(['scipy.optimize.root', 'euler', 'rk4', 'exact'])
 plt.grid()
 # %%
-# 1.4 bratu with num con
+# NOT USED bratu with num con
 def bratu_con_problem(x, args):
     mu = args[0]
 
@@ -307,3 +306,119 @@ plt.ylabel('max value of u(x)')
 plt.title('Pseudo-arclength on problems using BVP solver.')
 plt.grid()
 # %%
+# 1.4 diffusion linear
+def diff_l_bound(x, t, args):
+    return 0
+
+def diff_r_bound_dirneu(x, t, args):
+    return 0
+
+def diff_r_bound_rob(x, t, args):
+    delta, gamma = args
+    return delta - (gamma*x)
+
+def diff_init(x, t, args):
+    y = np.sin(np.pi * x)
+    return y
+
+xmol = pde_solver.solve_diffusion(
+            method='lines', 
+            boundary_type='dirichlet', 
+            l_bound_func=diff_l_bound, 
+            r_bound_func=diff_r_bound_dirneu, 
+            init_func=diff_init, 
+            D=0.1, 
+            x_min=0, 
+            x_max=1, 
+            nx=100, 
+            t_min=0, 
+            t_max=2, 
+            nt=200, 
+            )
+xee = pde_solver.solve_diffusion(
+            method='explicit_euler', 
+            boundary_type='dirichlet', 
+            l_bound_func=diff_l_bound, 
+            r_bound_func=diff_r_bound_dirneu, 
+            init_func=diff_init, 
+            D=0.1, 
+            x_min=0, 
+            x_max=1, 
+            nx=100, 
+            t_min=0, 
+            t_max=2, 
+            nt=200, 
+            )
+xie = pde_solver.solve_diffusion(
+            method='implicit_euler', 
+            boundary_type='dirichlet', 
+            l_bound_func=diff_l_bound, 
+            r_bound_func=diff_r_bound_dirneu, 
+            init_func=diff_init, 
+            D=0.1, 
+            x_min=0, 
+            x_max=1, 
+            nx=100, 
+            t_min=0, 
+            t_max=2, 
+            nt=200, 
+            )
+xcn = pde_solver.solve_diffusion(
+            method='crank_nicolson', 
+            boundary_type='dirichlet', 
+            l_bound_func=diff_l_bound, 
+            r_bound_func=diff_r_bound_dirneu, 
+            init_func=diff_init, 
+            D=0.1, 
+            x_min=0, 
+            x_max=1, 
+            nx=100, 
+            t_min=0, 
+            t_max=2, 
+            nt=200, 
+            )
+
+plt.plot(xmol[-1], xmol[0])
+plt.plot(xee[-1], xee[0])
+plt.plot(xie[-1], xie[0])
+plt.plot(xcn[-1], xcn[0])
+plt.plot(0.5, math.e**(-0.2 * math.pi * math.pi), 'ok')
+plt.xlabel('x')
+plt.ylabel('u(x,2)')
+plt.title('Solving the Linear Diffusion PDE')
+plt.legend(['Method of Lines', 'Explicit Euler', 'Implicit Euler', 'Crank-Nicolson', 'u(0.5,2) Exact'])
+plt.grid()
+# %%
+def bratu_l_bound(x, t, args):
+    return 0
+
+def bratu_r_bound(x, t, args):
+    return 0
+
+def bratu_init(x, t, args):
+    D, a, b, gamma1, gamma2 = args
+    return (-1/(2*D)) * (x-a) * (x-b) + ((gamma2-gamma1)/(b-a)) * (x-a) + gamma1
+
+def bratu_source(x, t, u, args):
+    mu = args[0]
+    return math.e**(mu * u)
+
+test = solve_diffusion(
+    'lines',
+    'dirichlet',
+    bratu_l_bound,
+    bratu_r_bound,
+    bratu_init,
+    1,
+    0,
+    1,
+    50,
+    0,
+    0.5,
+    50,
+    bratu_source,
+    init_args=[1, 0, 1, 0, 0],
+    source_args=[0.1]
+)
+
+plt.plot(test[-1], test[0])

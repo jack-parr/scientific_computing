@@ -1,5 +1,6 @@
 import scipy as sp
 import numpy as np
+import math
 import input_checks
 
 
@@ -24,16 +25,6 @@ def sparse_A(size, dm, do):
     col_idx = np.concatenate((np.arange(0, size), np.arange(1, size), np.arange(0, size-1)))
 
     return sp.sparse.csr_matrix((data, (row_idx, col_idx)), shape=(size,size))
-
-
-def linesmethod(boundary_type, l_bound_func, r_bound_func, init_func, D, x_min, x_max, nx, source_func=None, l_bound_args=None, r_bound_args=None, init_args=None, source_args=None):
-    
-    dx = (x_max - x_min) / nx
-    def PDE(t, u, D, A_mat, b_mat):
-        return D/dx**2 * (A_mat@u + b_mat)
-    
-    sol = sp.integrate.solve_ivp(PDE, (x_min, x_max), u_t, args=(D, A_mat, b_mat))
-    return sol.y, sol.t
 
 
 def solve_diffusion(method, boundary_type, l_bound_func, r_bound_func, init_func, D, x_min, x_max, nx, t_min, t_max, nt, source_func=None, l_bound_args=None, r_bound_args=None, init_args=None, source_args=None):
@@ -114,10 +105,11 @@ def solve_diffusion(method, boundary_type, l_bound_func, r_bound_func, init_func
     # MEETING STABILITY CONDITION
     dx = (x_max - x_min) / nx
     dt = (t_max - t_min) / nt
-    #dt = 0.49*(dx**2)/D
     C = (dt * D) / (dx ** 2)
-    if C > 0.5:
-        raise Exception('Error when adjusting (dt) to meet stability condition.')
+    if method == 'explicit_euler' or method == 'lines':
+        dt = 0.49*(dx**2)/D
+        nt = math.ceil((t_max - t_min) / dt)
+        C = (dt * D) / (dx ** 2)
     
     # ADJUST SOURCE TERM
     if source_func == None:
