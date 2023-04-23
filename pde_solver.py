@@ -1,10 +1,6 @@
-# %%
 import scipy as sp
 import numpy as np
-import method_of_lines
 import input_checks
-import math
-import matplotlib.pyplot as plt
 
 
 def sparse_A(size, dm, do):
@@ -30,13 +26,23 @@ def sparse_A(size, dm, do):
     return sp.sparse.csr_matrix((data, (row_idx, col_idx)), shape=(size,size))
 
 
+def linesmethod(boundary_type, l_bound_func, r_bound_func, init_func, D, x_min, x_max, nx, source_func=None, l_bound_args=None, r_bound_args=None, init_args=None, source_args=None):
+    
+    dx = (x_max - x_min) / nx
+    def PDE(t, u, D, A_mat, b_mat):
+        return D/dx**2 * (A_mat@u + b_mat)
+    
+    sol = sp.integrate.solve_ivp(PDE, (x_min, x_max), u_t, args=(D, A_mat, b_mat))
+    return sol.y, sol.t
+
+
 def solve_diffusion(method, boundary_type, l_bound_func, r_bound_func, init_func, D, x_min, x_max, nx, t_min, t_max, nt, source_func=None, l_bound_args=None, r_bound_args=None, init_args=None, source_args=None):
     """
     Solves the diffusion equation using finite difference methods, based on the input method and boundary conditions.
     ----------
     Parameters
     method : string
-        Either 'explicit_euler', 'implicit_euler', or 'crank_nicolson'.
+        Either 'lines', 'explicit_euler', 'implicit_euler', 'crank_nicolson', or 'imex'.
     boundary_type : string
         Either 'dirichlet', 'neumann', or 'robin'.
     l_bound_func : function
@@ -76,8 +82,8 @@ def solve_diffusion(method, boundary_type, l_bound_func, r_bound_func, init_func
 
     # INPUT CHECKS
     input_checks.test_string(method, 'method')
-    if method not in ['lines', 'explicit_euler', 'implicit_euler', 'crank_nicolson']:
-        raise Exception('Argument (method) must be either \'lines\', \'explicit_euler\', \'implicit_euler\', or \'crank_nicolson\'.')
+    if method not in ['lines', 'explicit_euler', 'implicit_euler', 'crank_nicolson', 'imex']:
+        raise Exception('Argument (method) must be either \'lines\', \'explicit_euler\', \'implicit_euler\', \'crank_nicolson\', or \'imex\'.')
     input_checks.test_string(boundary_type, 'boundary_type')
     if boundary_type not in ['dirichlet', 'neumann', 'robin']:
         raise Exception('Argument (boundary_type) must be either \'dirichlet\', \'neumann\', or \'robin\'.')
@@ -107,7 +113,8 @@ def solve_diffusion(method, boundary_type, l_bound_func, r_bound_func, init_func
 
     # MEETING STABILITY CONDITION
     dx = (x_max - x_min) / nx
-    dt = 0.4*(dx**2)/D
+    dt = (t_max - t_min) / nt
+    #dt = 0.49*(dx**2)/D
     C = (dt * D) / (dx ** 2)
     if C > 0.5:
         raise Exception('Error when adjusting (dt) to meet stability condition.')
@@ -164,8 +171,13 @@ def solve_diffusion(method, boundary_type, l_bound_func, r_bound_func, init_func
     
     # SOLVE
     if method == 'lines':
-        u_t = method_of_lines.solve_bvp('scipy', boundary_type, l_bound_func, r_bound_func, init_func, D, x_min, x_max, nx, source_func, l_bound_args, r_bound_args, init_args, source_args)
-
+        def PDE(t, u, A_mat, b_mat):
+            return C * (A_mat@u + b_mat)
+        for j in range(0, nt):
+            b = make_b(t_arr[j])
+            sol = sp.integrate.solve_ivp(PDE, (t_min, t_max), u_t, args=(A_mat, b))
+            u_t = sol.y[:,-1]
+            
     if method == 'explicit_euler':
         for j in range(0, nt):
             b = make_b(t_arr[j])
@@ -180,6 +192,11 @@ def solve_diffusion(method, boundary_type, l_bound_func, r_bound_func, init_func
         for j in range(0, nt):
             b = make_b(t_arr[j])
             u_t = sp.sparse.linalg.spsolve(I_mat - ((C/2)*A_mat), (I_mat + ((C/2)*A_mat))@u_t + (C*b))
+    
+    if method == 'imex':
+        for j in range(0, nt):
+            b = make_b(t_arr[j])
+            u_t = sp.sparse.linalg.spsolve(I_mat - (C*A_mat), u_t + (C*b))
 
     # MODIFY u_t ACCORDING TO BOUNDARY CONDITIONS
     if boundary_type == 'dirichlet':
@@ -188,38 +205,3 @@ def solve_diffusion(method, boundary_type, l_bound_func, r_bound_func, init_func
         u_t = np.concatenate((np.array([l_bound_func(x_min, 0, l_bound_args)]), u_t))
 
     return np.vstack([u_t, x_arr])
-
-
-def bratu_l_bound(x, t, args):
-    return 0
-
-def bratu_r_bound(x, t, args):
-    return 0
-
-def bratu_init(x, t, args):
-    D, a, b, gamma1, gamma2 = args
-    return (-1/(2*D)) * (x-a) * (x-b) + ((gamma2-gamma1)/(b-a)) * (x-a) + gamma1
-
-def bratu_source(x, u, args):
-    mu = args[0]
-    return math.e**(mu * u)
-
-test = solve_diffusion(
-    'lines',
-    'dirichlet',
-    bratu_l_bound,
-    bratu_r_bound,
-    bratu_init,
-    1,
-    0,
-    1,
-    50,
-    0,
-    0.5,
-    50,
-    bratu_source,
-    init_args=[1, 0, 1, 0, 0],
-    source_args=[0.1]
-)
-
-plt.plot(test[-1], test[0])

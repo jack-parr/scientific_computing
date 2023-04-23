@@ -4,6 +4,7 @@ import ode_solver
 import input_checks
 
 
+
 def solve_bvp(method, boundary_type, l_bound_func, r_bound_func, init_func, D, x_min, x_max, nx, source_func=None, l_bound_args=None, r_bound_args=None, init_args=None, source_args=None):
     """
     Solves a BVP problem using root solvers with finite difference methods, based on the input method and boundary conditions.
@@ -72,12 +73,12 @@ def solve_bvp(method, boundary_type, l_bound_func, r_bound_func, init_func, D, x
     
     # ADJUST SOURCE TERM
     if source_func == None:
-        def source_func(x, u, args):
+        def source_func(x, t, u, args):
             return np.zeros(np.size(x))
     
     # DEFINE FUNCTION FOR SOLVER
     def findiff_problem(u, t=None, args=None):
-    
+        
         F = np.zeros(size)
 
         # FIRST TERM
@@ -95,7 +96,7 @@ def solve_bvp(method, boundary_type, l_bound_func, r_bound_func, init_func, D, x
         elif boundary_type == 'robin':
             F[-1] = (-2*(1 + r_bound_args[1]*dx)*u[-1] + 2*u[-2]) / (dx**2) + ((2*r_bound_args[0])/dx)
 
-        return D*F + source_func(x_arr[1:size+1], u, source_args)
+        return (D*F) + source_func(x_arr[1:size+1], 0, u, source_args)
 
 
     # MEETING STABILITY CONDITION
@@ -117,6 +118,7 @@ def solve_bvp(method, boundary_type, l_bound_func, r_bound_func, init_func, D, x
     # SOLVE
     if method == 'scipy':
         u_t = sp.optimize.root(findiff_problem, u_t)
+        print(u_t.message)
         u_t = u_t.x
     else:
         u_t = ode_solver.solve_to(findiff_problem, method, u_t, 0, 0.5, dt)[:,-1][:-1]
