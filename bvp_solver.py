@@ -7,6 +7,42 @@ import input_checks
 
 
 def solve_bvp(method, boundary_type, l_bound_func, r_bound_func, init_func, D, x_min, x_max, nx, source_func=None, l_bound_args=None, r_bound_args=None, init_args=None, source_args=None):
+    """
+    Solves a BVP problem using root solvers with finite difference methods, based on the input method and boundary conditions.
+    ----------
+    Parameters
+    method : string
+        Either 'scipy', 'euler', or 'rk4'.
+    boundary_type : string
+        Either 'dirichlet', 'neumann', or 'robin'.
+    l_bound_func : function
+        Function that takes singular value (x) and any arguments as inputs and returns the left boundary value.
+    r_bound_func : function
+        Function that takes singular value (x) and any arguments as inputs and returns the right boundary value.
+    init_func : function
+        Function that takes array (x) and arguments as inputs and returns intitial solution array.
+    D : float OR int
+        Coefficient of second order derivative in the problem.
+    x_min : float OR int
+        Minimum x value.
+    x_max : float OR int
+        Maximum x value.
+    nx : int
+        Number of x values in the grid, affects step size used for x.
+    source_func : function
+        Function that takes array (x) and list (args) as inputs and returns source array.
+    l_bound_args : list OR numpy.ndarray
+        Additional arguments needed by 'l_bound_func'.
+    r_bound_args : list OR numpy.ndarray
+        Additional arguments needed by 'r_bound_func'. If (boundary_type) is 'robin', must contain two values [delta, gamma], such that r_bound_func = delta - gamma*u(x).
+    init_args : list OR numpy.ndarray
+        Additional arguments needed by 'init_func'.
+    source_args : list OR numpy.ndarray
+        Additional arguments needed by 'source_func'.
+    ----------
+    Returns
+        A numpy.array with a row of values for each solved parameter, and the final row being the x-values solved at.
+    """
 
     # INPUT CHECKS
     input_checks.test_string(method, 'method')

@@ -33,15 +33,15 @@ def solve_diffusion(method, boundary_type, l_bound_func, r_bound_func, init_func
     ----------
     Parameters
     method : string
-        Either 'root_rk4', 'explicit_euler', 'implicit_euler', or 'crank_nicolson'.
+        Either 'explicit_euler', 'implicit_euler', or 'crank_nicolson'.
     boundary_type : string
         Either 'dirichlet', 'neumann', or 'robin'.
     l_bound_func : function
-        Function that takes singular values (x, t) as inputs and returns the left boundary value.
+        Function that takes singular values (x, t) and any arguments as inputs and returns the left boundary value.
     r_bound_func : function
-        Function that takes singular values (x, t) as inputs and returns the right boundary value.
+        Function that takes singular values (x, t) and any arguments as inputs and returns the right boundary value.
     init_func : function
-        Function that takes arrays (x, t) and singular values (x_min, x_max) as inputs and returns intitial solution array.
+        Function that takes arrays (x, t) and singular values (x_min, x_max) and any arguments as inputs and returns intitial solution array.
     D : float OR int
         Diffusion Coefficient.
     x_min : float OR int
