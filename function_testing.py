@@ -6,8 +6,64 @@ import math
 import ode_solver as solve_ode
 import numerical_shooting as shooting
 import numerical_continuation as num_con
-import pde_solver as solve_pde
+import pde_solver
 
+# %%
+def diff_l_bound(x, t, args):
+    return 0
+
+
+def diff_r_bound_dirneu(x, t, args):
+    return 0
+
+
+def diff_r_bound_rob(x, t, args):
+    delta, gamma = args
+    return delta - (gamma*x)
+
+
+def diff_init(x, t, args):
+    x_min, x_max = args
+    y = np.sin((math.pi * x) / (x_max - x_min))
+    return y
+
+
+def diff_source(x_arr, t, u, args):
+    mu = args
+    return np.ones(shape=len(x_arr)) * (math.e**(u * mu))
+# %%
+x_pred = pde_solver.solve_diffusion(
+            method='crank_nicolson', 
+            boundary_type='neumann', 
+            l_bound_func=diff_l_bound, 
+            r_bound_func=diff_r_bound_dirneu, 
+            init_func=diff_init, 
+            D=1, 
+            x_min=0, 
+            x_max=5, 
+            nx=100, 
+            t_min=0, 
+            t_max=0.5, 
+            nt=1000, 
+            init_args=[0, 5])
+plt.plot(x_pred[-1], x_pred[0])
+# %%
+x_pred = pde_solver.solve_diffusion(
+            method='explicit_euler', 
+            boundary_type='robin', 
+            l_bound_func=diff_l_bound, 
+            r_bound_func=diff_r_bound_rob, 
+            init_func=diff_init, 
+            D=1, 
+            x_min=0, 
+            x_max=5, 
+            nx=100, 
+            t_min=0, 
+            t_max=0.5, 
+            nt=1000,
+            r_bound_args=[0, 2],
+            init_args=[0, 5])
+plt.plot(x_pred[-1], x_pred[0])
 # %%
 # PDE SOLVER
 # parameters
