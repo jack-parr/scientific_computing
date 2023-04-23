@@ -389,36 +389,21 @@ plt.title('Solving the Linear Diffusion PDE')
 plt.legend(['Method of Lines', 'Explicit Euler', 'Implicit Euler', 'Crank-Nicolson', 'u(0.5,2) Exact'])
 plt.grid()
 # %%
-def bratu_l_bound(x, t, args):
-    return 0
-
-def bratu_r_bound(x, t, args):
-    return 0
-
-def bratu_init(x, t, args):
-    D, a, b, gamma1, gamma2 = args
-    return (-1/(2*D)) * (x-a) * (x-b) + ((gamma2-gamma1)/(b-a)) * (x-a) + gamma1
-
-def bratu_source(x, t, u, args):
-    mu = args[0]
-    return math.e**(mu * u)
-
-test = solve_diffusion(
-    'lines',
-    'dirichlet',
-    bratu_l_bound,
-    bratu_r_bound,
-    bratu_init,
-    1,
-    0,
-    1,
-    50,
-    0,
-    0.5,
-    50,
-    bratu_source,
+x_pred = pde_solver.solve_diffusion(
+    method='explicit_euler', 
+    boundary_type='dirichlet', 
+    l_bound_func=bratu_l_bound, 
+    r_bound_func=bratu_r_bound, 
+    init_func=bratu_init, 
+    D=1, 
+    x_min=0, 
+    x_max=1, 
+    nx=100, 
+    t_min=0,
+    t_max=1 ,
+    nt=100,
+    source_func=bratu_source,
     init_args=[1, 0, 1, 0, 0],
     source_args=[0.1]
-)
-
-plt.plot(test[-1], test[0])
+    )
+plt.plot(x_pred[-1], x_pred[0])
