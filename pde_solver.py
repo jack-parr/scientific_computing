@@ -1,33 +1,7 @@
 # %%
 import scipy as sp
 import numpy as np
-import matplotlib.pyplot as plt
-import ode_solver
-import math
 import input_checks
-
-
-def findiff_problem(u, t, args):
-    # finite difference for root solver.
-    source, boundary, size, dx, l_bound, r_bound = args
-    F = np.zeros(size)
-
-    # FIRST TERM
-    F[0] = ((u[1] - 2*u[0] + l_bound) / dx**2) + source[0]
-
-    # INNER TERMS
-    for i in range(1, size-1):
-        F[i] = ((u[i+1] - 2*u[i] + u[i-1]) / dx**2) + source[i]
-
-    # FINAL TERM
-    if boundary == 'dirichlet':
-        F[-1] = ((r_bound[0] - 2*u[-1] + u[-2]) / dx**2) + source[-1]
-    elif boundary == 'neumann':
-        F[-1] = ((-2*u[-1] + 2*u[-2]) / dx**2) + ((2*r_bound[0])/dx) + source[-1]
-    elif boundary == 'robin':
-        F[-1] = (-2*(1 + r_bound[1]*dx)*u[-1] + 2*u[-2]) / (dx**2) + ((2*r_bound[0])/dx) + source[-1]
-
-    return F
 
 
 def sparse_A(size, dm, do):
@@ -53,9 +27,9 @@ def sparse_A(size, dm, do):
     return sp.sparse.csr_matrix((data, (row_idx, col_idx)), shape=(size,size))
 
 
-def solve_diffusion(method, boundary_type, l_bound_func, r_bound_func, r_bound_args, init_func, D, x_min, x_max, nx, t_min, t_max, nt, source_func=None, l_bound_args=None, init_args=None, source_args=None):
+def solve_diffusion(method, boundary_type, l_bound_func, r_bound_func, init_func, D, x_min, x_max, nx, t_min, t_max, nt, source_func=None, l_bound_args=None, r_bound_args=None, init_args=None, source_args=None):
     """
-    Solves the heat equation using finite difference methods, based on the input method and boundary conditions.
+    Solves the diffusion equation using finite difference methods, based on the input method and boundary conditions.
     ----------
     Parameters
     method : string
@@ -63,11 +37,9 @@ def solve_diffusion(method, boundary_type, l_bound_func, r_bound_func, r_bound_a
     boundary_type : string
         Either 'dirichlet', 'neumann', or 'robin'.
     l_bound_func : function
-        Function that takes singular (x, t) as inputs and returns the left boundary value.
+        Function that takes singular values (x, t) as inputs and returns the left boundary value.
     r_bound_func : function
         Function that takes singular values (x, t) as inputs and returns the right boundary value.
-    r_bound_args : list OR numpy.ndarray
-        Additional arguments needed by 'r_bound_func'. Must contain two values [delta, gamma], such that r_bound_func = delta - gamma*u(x).
     init_func : function
         Function that takes arrays (x, t) and singular values (x_min, x_max) as inputs and returns intitial solution array.
     D : float OR int
@@ -88,6 +60,8 @@ def solve_diffusion(method, boundary_type, l_bound_func, r_bound_func, r_bound_a
         Function that takes singular values (x, t) and list (args) as inputs and returns source value.
     l_bound_args : list OR numpy.ndarray
         Additional arguments needed by 'l_bound_func'.
+    r_bound_args : list OR numpy.ndarray
+        Additional arguments needed by 'r_bound_func'. If (boundary_type) is 'robin', must contain two values [delta, gamma], such that r_bound_func = delta - gamma*u(x).
     init_args : list OR numpy.ndarray
         Additional arguments needed by 'init_func'.
     source_args : list OR numpy.ndarray
@@ -99,16 +73,13 @@ def solve_diffusion(method, boundary_type, l_bound_func, r_bound_func, r_bound_a
 
     # INPUT CHECKS
     input_checks.test_string(method, 'method')
-    if method not in ['root_rk4', 'explicit_euler', 'implicit_euler', 'crank_nicolson']:
-        raise Exception('Argument (method) must be either \'root_rk4\', \'explicit_euler\', \'implicit_euler\', or \'crank_nicolson\'.')
+    if method not in ['explicit_euler', 'implicit_euler', 'crank_nicolson']:
+        raise Exception('Argument (method) must be either \'explicit_euler\', \'implicit_euler\', or \'crank_nicolson\'.')
     input_checks.test_string(boundary_type, 'boundary_type')
     if boundary_type not in ['dirichlet', 'neumann', 'robin']:
         raise Exception('Argument (boundary_type) must be either \'dirichlet\', \'neumann\', or \'robin\'.')
     input_checks.test_function(l_bound_func, 'l_bound_func')
     input_checks.test_function(r_bound_func, 'r_bound_func')
-    input_checks.test_list_nparray(r_bound_args, 'r_bound_args')
-    if len(r_bound_args) != 2:
-        raise Exception('Argument (r_bound_args) must contain two values.')
     input_checks.test_function(init_func, 'init_func')
     input_checks.test_float_int(D, 'D')
     input_checks.test_float_int(x_min, 'x_min')
@@ -121,6 +92,11 @@ def solve_diffusion(method, boundary_type, l_bound_func, r_bound_func, r_bound_a
         input_checks.test_function(source_func, 'source_func')
     if l_bound_args != None:
         input_checks.test_list_nparray(l_bound_args, 'l_bound_args')
+    if r_bound_args != None:
+        input_checks.test_list_nparray(r_bound_args, 'r_bound_args')
+    if boundary_type == 'robin':
+        if len(r_bound_args) != 2:
+            raise Exception('Argument (r_bound_args) must contain two values.')
     if init_args != None:
         input_checks.test_list_nparray(init_args, 'init_args')
     if source_args != None:
@@ -130,6 +106,8 @@ def solve_diffusion(method, boundary_type, l_bound_func, r_bound_func, r_bound_a
     dx = (x_max - x_min) / nx
     dt = 0.5*(dx**2)/D
     C = (dt * D) / (dx ** 2)
+    if C > 0.5:
+        raise Exception('Error when adjusting (dt) to meet stability condition.')
     
     # ADJUST SOURCE TERM
     if source_func == None:
@@ -161,7 +139,7 @@ def solve_diffusion(method, boundary_type, l_bound_func, r_bound_func, r_bound_a
         def make_b(t):
             b = np.zeros(size)
             b[0] = l_bound_func(x_min, t, l_bound_args)
-            b[-1] = r_bound_func(x_max, t, args=[r_bound_args[0], 0])
+            b[-1] = r_bound_func(x_max, t, r_bound_args)
             return b + dt*source_func(x_arr[1:nx], t, u_t, source_args)
     
     if boundary_type == 'neumann':
@@ -169,7 +147,7 @@ def solve_diffusion(method, boundary_type, l_bound_func, r_bound_func, r_bound_a
         def make_b(t):
             b = np.zeros(size)
             b[0] = l_bound_func(x_min, t, l_bound_args)
-            b[-1] = r_bound_func(x_max, t, args=[r_bound_args[0], 0]) * 2 * dx
+            b[-1] = r_bound_func(x_max, t, r_bound_args) * 2 * dx
             return b + dt*source_func(x_arr[1:], t, u_t, source_args)
     
     if boundary_type == 'robin':
@@ -182,9 +160,6 @@ def solve_diffusion(method, boundary_type, l_bound_func, r_bound_func, r_bound_a
             return b + dt*source_func(x_arr[1:], t, u_t, source_args)
     
     # SOLVE
-    if method == 'root_rk4':
-        u_t = ode_solver.solve_to(findiff_problem, 'rk4', u_t, t_min, t_max, dt, args=[source_func(x_arr[1:size+1], 0, u_t, source_args), boundary_type, size, dx, l_bound_func(x_min, 0, l_bound_args), r_bound_args])[:,-1][:-1]
-
     if method == 'explicit_euler':
         for j in range(0, nt):
             b = make_b(t_arr[j])
@@ -202,44 +177,8 @@ def solve_diffusion(method, boundary_type, l_bound_func, r_bound_func, r_bound_a
 
     # MODIFY u_t ACCORDING TO BOUNDARY CONDITIONS
     if boundary_type == 'dirichlet':
-        u_t = np.concatenate((np.array([l_bound_func(x_min, 0, l_bound_args)]), u_t, np.array([r_bound_func(x_max, 0, args=[r_bound_args[0], 0])])))
+        u_t = np.concatenate((np.array([l_bound_func(x_min, 0, l_bound_args)]), u_t, np.array([r_bound_func(x_max, 0, r_bound_args)])))
     else:
         u_t = np.concatenate((np.array([l_bound_func(x_min, 0, l_bound_args)]), u_t))
 
     return np.vstack([u_t, x_arr])
-
-
-def diff_l_bound(x, t, args):
-    return 0
-
-
-def diff_r_bound(x, t, args):
-    delta, gamma = args
-    return delta - (gamma*x)
-
-
-def diff_init(x, t, args):
-    return 0.1*x
-
-
-def diff_source(x, t, u, args):
-    return np.ones(np.size(x))
-
-
-x_pred = solve_diffusion(
-    method='root_rk4', 
-    boundary_type='dirichlet', 
-    l_bound_func=diff_l_bound, 
-    r_bound_func=diff_r_bound, 
-    r_bound_args=[1, 0],
-    init_func=diff_init, 
-    D=1, 
-    x_min=0, 
-    x_max=1, 
-    nx=100, 
-    t_min=0, 
-    t_max=1, 
-    nt=1000,
-    init_args=[0, 5])
-
-plt.plot(x_pred[-1], x_pred[0])
