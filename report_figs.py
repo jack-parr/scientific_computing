@@ -3,10 +3,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 import math
 import time
-import timeit
 import ode_solver
 import numerical_shooting
 import numerical_continuation
+import method_of_lines
 import pde_solver
 # %%
 # 1.1 simple
@@ -197,3 +197,113 @@ plt.ylabel('$\dot{x}$')
 plt.title('Numerical Continuation on the Hopf Normal Equations')
 plt.legend(['Natural Parameter', 'Pseudo-arclength'])
 plt.grid()
+# %%
+# 1.4 bratu
+def bratu_l_bound(x, args):
+    return 0
+
+def bratu_r_bound(x, args):
+    return 0
+
+def bratu_init(x, args):
+    D, a, b, gamma1, gamma2 = args
+    return (-1/(2*D)) * (x-a) * (x-b) + ((gamma2-gamma1)/(b-a)) * (x-a) + gamma1
+
+def bratu_source(x, u, args):
+    mu = args[0]
+    return math.e**(mu * u)
+
+bratu_sp = method_of_lines.solve_bvp(
+    method='scipy', 
+    boundary_type='dirichlet', 
+    l_bound_func=bratu_l_bound, 
+    r_bound_func=bratu_r_bound, 
+    init_func=bratu_init, 
+    D=1, 
+    x_min=0, 
+    x_max=1, 
+    nx=100, 
+    source_func=bratu_source,
+    init_args=[1, 0, 1, 0, 0],
+    source_args=[0.1]
+    )
+
+bratu_euler = method_of_lines.solve_bvp(
+    method='euler', 
+    boundary_type='dirichlet', 
+    l_bound_func=bratu_l_bound, 
+    r_bound_func=bratu_r_bound, 
+    init_func=bratu_init, 
+    D=1, 
+    x_min=0, 
+    x_max=1, 
+    nx=100, 
+    source_func=bratu_source,
+    init_args=[1, 0, 1, 0, 0],
+    source_args=[0.1]
+    )
+
+bratu_rk4 = method_of_lines.solve_bvp(
+    method='rk4', 
+    boundary_type='dirichlet', 
+    l_bound_func=bratu_l_bound, 
+    r_bound_func=bratu_r_bound, 
+    init_func=bratu_init, 
+    D=1, 
+    x_min=0, 
+    x_max=1, 
+    nx=100, 
+    source_func=bratu_source,
+    init_args=[1, 0, 1, 0, 0],
+    source_args=[0.1]
+    )
+
+def bratu_true(x, D, a, b, gamma1, gamma2):
+    return (-1/(2*D)) * (x-a) * (x-b) + ((gamma2-gamma1)/(b-a)) * (x-a) + gamma1
+
+plt.plot(bratu_sp[-1], bratu_sp[0])
+plt.plot(bratu_euler[-1], bratu_euler[0])
+plt.plot(bratu_rk4[-1], bratu_rk4[0])
+plt.plot(bratu_sp[-1], bratu_true(bratu_sp[-1], 1, 0, 1, 0, 0))
+plt.xlabel('x')
+plt.ylabel('u(x)')
+plt.title('Solution of Bratu with $\mu$ = 0.1')
+plt.legend(['scipy.optimize.root', 'euler', 'rk4', 'exact'])
+plt.grid()
+# %%
+# 1.4 bratu with num con
+def bratu_con_problem(x, args):
+    mu = args[0]
+
+    x_pred = method_of_lines.solve_bvp(
+        method='scipy', 
+        boundary_type='dirichlet', 
+        l_bound_func=bratu_l_bound, 
+        r_bound_func=bratu_r_bound, 
+        init_func=bratu_init, 
+        D=1, 
+        x_min=0, 
+        x_max=1, 
+        nx=100, 
+        source_func=bratu_source,
+        init_args=[1, 0, 1, 0, 0],
+        source_args=[mu]
+        )
+
+    return x-max(x_pred[0])
+
+bratu_con = numerical_continuation.pseudo_arclength(
+    func=bratu_con_problem,
+    x0=[0.1],
+    init_args=[0],
+    vary_par_idx=0,
+    max_par=4,
+    num_steps=100
+)
+
+plt.plot(bratu_con[-1], bratu_con[0])
+plt.xlabel('$\mu$')
+plt.ylabel('max value of u(x)')
+plt.title('Pseudo-arclength on problems using BVP solver.')
+plt.grid()
+# %%

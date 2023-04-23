@@ -1,7 +1,10 @@
 # %%
 import scipy as sp
 import numpy as np
+import method_of_lines
 import input_checks
+import math
+import matplotlib.pyplot as plt
 
 
 def sparse_A(size, dm, do):
@@ -73,8 +76,8 @@ def solve_diffusion(method, boundary_type, l_bound_func, r_bound_func, init_func
 
     # INPUT CHECKS
     input_checks.test_string(method, 'method')
-    if method not in ['explicit_euler', 'implicit_euler', 'crank_nicolson']:
-        raise Exception('Argument (method) must be either \'explicit_euler\', \'implicit_euler\', or \'crank_nicolson\'.')
+    if method not in ['lines', 'explicit_euler', 'implicit_euler', 'crank_nicolson']:
+        raise Exception('Argument (method) must be either \'lines\', \'explicit_euler\', \'implicit_euler\', or \'crank_nicolson\'.')
     input_checks.test_string(boundary_type, 'boundary_type')
     if boundary_type not in ['dirichlet', 'neumann', 'robin']:
         raise Exception('Argument (boundary_type) must be either \'dirichlet\', \'neumann\', or \'robin\'.')
@@ -160,6 +163,9 @@ def solve_diffusion(method, boundary_type, l_bound_func, r_bound_func, init_func
             return b + dt*source_func(x_arr[1:], t, u_t, source_args)
     
     # SOLVE
+    if method == 'lines':
+        u_t = method_of_lines.solve_bvp('scipy', boundary_type, l_bound_func, r_bound_func, init_func, D, x_min, x_max, nx, source_func, l_bound_args, r_bound_args, init_args, source_args)
+
     if method == 'explicit_euler':
         for j in range(0, nt):
             b = make_b(t_arr[j])
@@ -182,3 +188,38 @@ def solve_diffusion(method, boundary_type, l_bound_func, r_bound_func, init_func
         u_t = np.concatenate((np.array([l_bound_func(x_min, 0, l_bound_args)]), u_t))
 
     return np.vstack([u_t, x_arr])
+
+
+def bratu_l_bound(x, t, args):
+    return 0
+
+def bratu_r_bound(x, t, args):
+    return 0
+
+def bratu_init(x, t, args):
+    D, a, b, gamma1, gamma2 = args
+    return (-1/(2*D)) * (x-a) * (x-b) + ((gamma2-gamma1)/(b-a)) * (x-a) + gamma1
+
+def bratu_source(x, u, args):
+    mu = args[0]
+    return math.e**(mu * u)
+
+test = solve_diffusion(
+    'lines',
+    'dirichlet',
+    bratu_l_bound,
+    bratu_r_bound,
+    bratu_init,
+    1,
+    0,
+    1,
+    50,
+    0,
+    0.5,
+    50,
+    bratu_source,
+    init_args=[1, 0, 1, 0, 0],
+    source_args=[0.1]
+)
+
+plt.plot(test[-1], test[0])

@@ -5,7 +5,7 @@ import math
 import ode_solver
 import numerical_shooting
 import numerical_continuation
-import bvp_solver
+import method_of_lines
 import pde_solver
 
 
@@ -262,7 +262,7 @@ class test_methods_bvp_solver(unittest.TestCase):
     def test_solve_bvp(self):
         
         # DIRICHLET BOUNDARY TYPE
-        x_pred = bvp_solver.solve_bvp(
+        x_pred = method_of_lines.solve_bvp(
             method='scipy', 
             boundary_type='dirichlet', 
             l_bound_func=bvp_l_bound, 
@@ -282,7 +282,7 @@ class test_methods_bvp_solver(unittest.TestCase):
         self.assertAlmostEqual(round(x_pred[1][10], 3), 0.100)
         self.assertAlmostEqual(round(x_pred[1][-10], 3), 0.910)
 
-        x_pred = bvp_solver.solve_bvp(
+        x_pred = method_of_lines.solve_bvp(
             method='euler', 
             boundary_type='dirichlet', 
             l_bound_func=bvp_l_bound, 
@@ -302,7 +302,7 @@ class test_methods_bvp_solver(unittest.TestCase):
         self.assertAlmostEqual(round(x_pred[1][10], 3), 0.100)
         self.assertAlmostEqual(round(x_pred[1][-10], 3), 0.910)
 
-        x_pred = bvp_solver.solve_bvp(
+        x_pred = method_of_lines.solve_bvp(
             method='rk4', 
             boundary_type='dirichlet', 
             l_bound_func=bvp_l_bound, 
@@ -324,7 +324,7 @@ class test_methods_bvp_solver(unittest.TestCase):
 
 
         # NEUMANN BOUNDARY TYPE
-        x_pred = bvp_solver.solve_bvp(
+        x_pred = method_of_lines.solve_bvp(
             method='scipy', 
             boundary_type='neumann', 
             l_bound_func=bvp_l_bound, 
@@ -344,7 +344,7 @@ class test_methods_bvp_solver(unittest.TestCase):
         self.assertAlmostEqual(round(x_pred[1][10], 3), 0.100)
         self.assertAlmostEqual(round(x_pred[1][-10], 3), 0.910)
 
-        x_pred = bvp_solver.solve_bvp(
+        x_pred = method_of_lines.solve_bvp(
             method='euler', 
             boundary_type='neumann', 
             l_bound_func=bvp_l_bound, 
@@ -364,7 +364,7 @@ class test_methods_bvp_solver(unittest.TestCase):
         self.assertAlmostEqual(round(x_pred[1][10], 3), 0.100)
         self.assertAlmostEqual(round(x_pred[1][-10], 3), 0.910)
 
-        x_pred = bvp_solver.solve_bvp(
+        x_pred = method_of_lines.solve_bvp(
             method='rk4', 
             boundary_type='neumann', 
             l_bound_func=bvp_l_bound, 
@@ -386,7 +386,7 @@ class test_methods_bvp_solver(unittest.TestCase):
 
 
         # ROBIN BOUNDARY TYPE
-        x_pred = bvp_solver.solve_bvp(
+        x_pred = method_of_lines.solve_bvp(
             method='scipy', 
             boundary_type='robin', 
             l_bound_func=bvp_l_bound, 
@@ -407,7 +407,7 @@ class test_methods_bvp_solver(unittest.TestCase):
         self.assertAlmostEqual(round(x_pred[1][10], 3), 0.100)
         self.assertAlmostEqual(round(x_pred[1][-10], 3), 0.910)
 
-        x_pred = bvp_solver.solve_bvp(
+        x_pred = method_of_lines.solve_bvp(
             method='euler', 
             boundary_type='robin', 
             l_bound_func=bvp_l_bound, 
@@ -428,7 +428,7 @@ class test_methods_bvp_solver(unittest.TestCase):
         self.assertAlmostEqual(round(x_pred[1][10], 3), 0.100)
         self.assertAlmostEqual(round(x_pred[1][-10], 3), 0.910)
 
-        x_pred = bvp_solver.solve_bvp(
+        x_pred = method_of_lines.solve_bvp(
             method='rk4', 
             boundary_type='robin', 
             l_bound_func=bvp_l_bound, 

@@ -14,11 +14,11 @@ def solve_bvp(method, boundary_type, l_bound_func, r_bound_func, init_func, D, x
     boundary_type : string
         Either 'dirichlet', 'neumann', or 'robin'.
     l_bound_func : function
-        Function that takes singular value (x) and any arguments as inputs and returns the left boundary value.
+        Function that takes singular values (x, t) and any arguments as inputs and returns the left boundary value.
     r_bound_func : function
-        Function that takes singular value (x) and any arguments as inputs and returns the right boundary value.
+        Function that takes singular values (x, t) and any arguments as inputs and returns the right boundary value.
     init_func : function
-        Function that takes array (x) and arguments as inputs and returns intitial solution array.
+        Function that takes array (x, t) and arguments as inputs and returns intitial solution array.
     D : float OR int
         Coefficient of second order derivative in the problem.
     x_min : float OR int
@@ -39,7 +39,7 @@ def solve_bvp(method, boundary_type, l_bound_func, r_bound_func, init_func, D, x
         Additional arguments needed by 'source_func'.
     ----------
     Returns
-        A numpy.array with a row of values for each solved parameter, and the final row being the x-values solved at.
+        A numpy.array with a row of values for each solved parameter.
     """
 
     # INPUT CHECKS
@@ -81,7 +81,7 @@ def solve_bvp(method, boundary_type, l_bound_func, r_bound_func, init_func, D, x
         F = np.zeros(size)
 
         # FIRST TERM
-        F[0] = ((u[1] - 2*u[0] + l_bound_func(x_min, l_bound_args)) / dx**2)
+        F[0] = ((u[1] - 2*u[0] + l_bound_func(x_min, 0, l_bound_args)) / dx**2)
 
         # INNER TERMS
         for i in range(1, size-1):
@@ -89,13 +89,13 @@ def solve_bvp(method, boundary_type, l_bound_func, r_bound_func, init_func, D, x
 
         # FINAL TERM
         if boundary_type == 'dirichlet':
-            F[-1] = ((r_bound_func(x_max, r_bound_args) - 2*u[-1] + u[-2]) / dx**2)
+            F[-1] = (r_bound_func(x_max, 0, r_bound_args) - 2*u[-1] + u[-2]) / dx**2
         elif boundary_type == 'neumann':
-            F[-1] = ((-2*u[-1] + 2*u[-2]) / dx**2) + ((2*r_bound_func(x_max, r_bound_args))/dx)
+            F[-1] = ((-2*u[-1] + 2*u[-2]) / dx**2) + ((2*r_bound_func(x_max, 0, r_bound_args))/dx)
         elif boundary_type == 'robin':
             F[-1] = (-2*(1 + r_bound_args[1]*dx)*u[-1] + 2*u[-2]) / (dx**2) + ((2*r_bound_args[0])/dx)
 
-        return D*F + source_func(x_arr[1:size+1], u_t, source_args)
+        return D*F + source_func(x_arr[1:size+1], u, source_args)
 
 
     # MEETING STABILITY CONDITION
@@ -109,23 +109,16 @@ def solve_bvp(method, boundary_type, l_bound_func, r_bound_func, init_func, D, x
     x_arr = np.linspace(x_min, x_max, nx+1)
     if boundary_type == 'dirichlet':
         size = nx-1
-        u_t = init_func(x_arr[1:nx], init_args)
+        u_t = init_func(x_arr[1:nx], 0, init_args)
     else:
         size = nx
-        u_t = init_func(x_arr[1:], init_args)
+        u_t = init_func(x_arr[1:], 0, init_args)
 
     # SOLVE
     if method == 'scipy':
         u_t = sp.optimize.root(findiff_problem, u_t)
-        print(u_t.message)
         u_t = u_t.x
     else:
-        u_t = ode_solver.solve_to(findiff_problem, method, u_t, 0, 2, dt)[:,-1][:-1]
+        u_t = ode_solver.solve_to(findiff_problem, method, u_t, 0, 0.5, dt)[:,-1][:-1]
     
-    # ADD BOUNDARIES
-    if boundary_type == 'dirichlet':
-        u_t = np.concatenate((np.array([l_bound_func(x_min, l_bound_args)]), u_t, np.array([r_bound_func(x_max, r_bound_args)])))
-    else:
-        u_t = np.concatenate((np.array([l_bound_func(x_min, l_bound_args)]), u_t))
-
-    return np.vstack([u_t, x_arr])
+    return u_t

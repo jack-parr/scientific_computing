@@ -7,7 +7,42 @@ import ode_solver as solve_ode
 import numerical_shooting as shooting
 import numerical_continuation as num_con
 import pde_solver
-import bvp_solver
+import method_of_lines
+# %%
+# BVP SOLVER TESTING
+def l_bound(x, args):
+    return 0
+
+def r_bound(x, args):
+    return 0
+
+def init(x, args):
+    return np.ones(shape=len(x))
+
+def source(x, u, args):
+    return 1
+
+bvp1_pred = method_of_lines.solve_bvp(
+    method='scipy',
+    boundary_type='dirichlet',
+    l_bound_func=l_bound,
+    r_bound_func=r_bound,
+    init_func=init,
+    D=1,
+    x_min=0,
+    x_max=1,
+    nx=100,
+    source_func=source
+)
+
+def bvp1_true(x, a, b, gamma1, gamma2):
+    return ((gamma2-gamma1)/(b-a)) * (x-a) + gamma1
+
+def bvp2_true(x, D, a, b, gamma1, gamma2):
+    return (-1/(2*D)) * (x-a) * (x-b) + ((gamma2-gamma1)/(b-a)) * (x-a) + gamma1
+
+plt.plot(bvp1_pred[-1], bvp1_pred[0])
+plt.plot(bvp1_pred[-1], bvp2_true(bvp1_pred[-1], 1, 0, 1, 0, 0))
 # %%
 # BVP SOLVER
 def bvp_l_bound(x, args):
@@ -30,7 +65,7 @@ def bvp_source(x, u, args):
     return 1
 
 
-x_pred = bvp_solver.solve_bvp(
+x_pred = method_of_lines.solve_bvp(
     method='rk4', 
     boundary_type='dirichlet', 
     l_bound_func=bvp_l_bound, 
