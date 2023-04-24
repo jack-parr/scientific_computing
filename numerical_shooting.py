@@ -18,7 +18,7 @@ def shooting_problem(func):
     # INPUT CHECKS
     input_checks.test_function(func, 'func')
 
-    def G(x0, phase_con, func_args, phase_args):
+    def S(x0, phase_con, func_args, phase_args):
         """
         This is a function such that the root is the initial values is the periodic orbit of the ODE system 'func'.
         ----------
@@ -47,7 +47,7 @@ def shooting_problem(func):
 
         T = x0[-1]
         x_in = x0[:-1]
-        x_sol = solve_ode.solve_to(func, 'rk4', x_in, 0, T, 0.01, func_args)
+        x_sol = solve_ode.solve_to(func, x_in, 0, T, 0.01, 'rk4', func_args)
         
         # EXTRACTING FINAL COORDINATE VALUES
         x_out = []
@@ -59,7 +59,7 @@ def shooting_problem(func):
         else:
             return x_in - x_out
     
-    return G
+    return S
 
 
 def orbit_shoot(func, x0, solver=sp.optimize.fsolve, phase_con=None, func_args=None, phase_args=None):
@@ -95,7 +95,7 @@ def orbit_shoot(func, x0, solver=sp.optimize.fsolve, phase_con=None, func_args=N
     if phase_args != None:
         input_checks.test_list_nparray(phase_args, 'phase_args')
 
-    G = shooting_problem(func)
-    orbit = solver(G, x0, (phase_con, func_args, phase_args))
+    S = shooting_problem(func)
+    orbit = solver(S, x0, (phase_con, func_args, phase_args))
 
     return orbit

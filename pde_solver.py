@@ -203,7 +203,7 @@ def solve_diffusion(method, boundary_type, l_bound_func, r_bound_func, init_func
     if method == 'explicit_euler':
         for j in range(0, nt):
             b = make_b(t_arr[j])
-            u_t += solver(I_mat, C*(A_mat@u_t + b))
+            u_t = solver(I_mat, u_t + C*(A_mat@u_t + b))
     
     if method == 'implicit_euler':
         for j in range(0, nt):

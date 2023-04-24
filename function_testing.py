@@ -3,11 +3,31 @@ import numpy as np
 import scipy as sp
 import matplotlib.pyplot as plt
 import math
-import ode_solver as solve_ode
-import numerical_shooting as shooting
-import numerical_continuation as num_con
+import ode_solver
+import numerical_shooting
+import numerical_continuation
 import pde_solver
-import method_of_lines
+# %%
+def hopf_normal(x, t, args):
+    b = args[0]
+    x1, x2 = x
+    return np.array([b*x1 - x2 - x1*(x1**2 + x2**2), x1 + b*x2 - x2*(x1**2 + x2**2)])
+
+
+def hopf_pc(x, args):
+    return hopf_normal(x, 0, args)[0]
+
+x_pred = numerical_continuation.natural_continuation(
+            func=hopf_normal,
+            x0=[1.4, 1, 6.3],
+            init_args=[2],
+            vary_par_idx=0,
+            max_par=-1,
+            num_steps=50,
+            discretisation=numerical_shooting.shooting_problem,
+            solver=sp.optimize.fsolve,
+            phase_con=hopf_pc
+        )
 # %%
 # BVP SOLVER TESTING
 def l_bound(x, args):

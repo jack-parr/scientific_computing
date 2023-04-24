@@ -199,77 +199,43 @@ plt.legend(['Natural Parameter', 'Pseudo-arclength'])
 plt.grid()
 # %%
 # NOT USED bratu
-def bratu_l_bound(x, args):
+def bratu_l_bound(x, t, args):
     return 0
 
-def bratu_r_bound(x, args):
+def bratu_r_bound(x, t, args):
     return 0
 
-def bratu_init(x, args):
+def bratu_init(x, t, args):
     D, a, b, gamma1, gamma2 = args
     return (-1/(2*D)) * (x-a) * (x-b) + ((gamma2-gamma1)/(b-a)) * (x-a) + gamma1
 
-def bratu_source(x, u, args):
+def bratu_source(x, t, u, args):
     mu = args[0]
     return math.e**(mu * u)
 
-bratu_sp = method_of_lines.solve_bvp(
-    method='scipy', 
-    boundary_type='dirichlet', 
-    l_bound_func=bratu_l_bound, 
-    r_bound_func=bratu_r_bound, 
-    init_func=bratu_init, 
-    D=1, 
-    x_min=0, 
-    x_max=1, 
-    nx=100, 
+bratu_sol = pde_solver.solve_diffusion(
+    method='implicit_euler',
+    boundary_type='dirichlet',
+    l_bound_func=bratu_l_bound,
+    r_bound_func=bratu_r_bound,
+    init_func=bratu_init,
+    D=1,
+    x_min=0,
+    x_max=1,
+    nx=100,
+    t_min=0,
+    t_max=2,
+    nt=1000,
     source_func=bratu_source,
     init_args=[1, 0, 1, 0, 0],
-    source_args=[0.1]
-    )
-
-bratu_euler = method_of_lines.solve_bvp(
-    method='euler', 
-    boundary_type='dirichlet', 
-    l_bound_func=bratu_l_bound, 
-    r_bound_func=bratu_r_bound, 
-    init_func=bratu_init, 
-    D=1, 
-    x_min=0, 
-    x_max=1, 
-    nx=100, 
-    source_func=bratu_source,
-    init_args=[1, 0, 1, 0, 0],
-    source_args=[0.1]
-    )
-
-bratu_rk4 = method_of_lines.solve_bvp(
-    method='rk4', 
-    boundary_type='dirichlet', 
-    l_bound_func=bratu_l_bound, 
-    r_bound_func=bratu_r_bound, 
-    init_func=bratu_init, 
-    D=1, 
-    x_min=0, 
-    x_max=1, 
-    nx=100, 
-    source_func=bratu_source,
-    init_args=[1, 0, 1, 0, 0],
-    source_args=[0.1]
-    )
+    source_args=[0]
+)
 
 def bratu_true(x, D, a, b, gamma1, gamma2):
     return (-1/(2*D)) * (x-a) * (x-b) + ((gamma2-gamma1)/(b-a)) * (x-a) + gamma1
 
-plt.plot(bratu_sp[-1], bratu_sp[0])
-plt.plot(bratu_euler[-1], bratu_euler[0])
-plt.plot(bratu_rk4[-1], bratu_rk4[0])
-plt.plot(bratu_sp[-1], bratu_true(bratu_sp[-1], 1, 0, 1, 0, 0))
-plt.xlabel('x')
-plt.ylabel('u(x)')
-plt.title('Solution of Bratu with $\mu$ = 0.1')
-plt.legend(['scipy.optimize.root', 'euler', 'rk4', 'exact'])
-plt.grid()
+plt.plot(bratu_sol[-1], bratu_sol[0])
+plt.plot(bratu_sol[-1], bratu_true(bratu_sol[-1], 1, 0, 1, 0, 0))
 # %%
 # NOT USED bratu with num con
 def bratu_con_problem(x, args):
