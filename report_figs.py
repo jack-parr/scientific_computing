@@ -1,5 +1,6 @@
 # %%
 import numpy as np
+import scipy as sp
 import matplotlib.pyplot as plt
 import math
 import time
@@ -428,3 +429,75 @@ for m in methods:
 
 ts = np.array(t_stor)
 print(t_stor)
+# %%
+# PDE WITH NUM CON
+def bratu_l_bound(x, args):
+    return 0
+
+def bratu_r_bound(x, args):
+    return 0
+
+def bratu_init(x, args):
+    D, a, b, gamma1, gamma2 = args
+    return (-1/(2*D)) * (x-a) * (x-b) + ((gamma2-gamma1)/(b-a)) * (x-a) + gamma1
+
+def bratu_source(x, args):
+    mu = args[0]
+    return math.e**(mu * x)
+# %%
+def testsourcefunc(x, args):
+    mu = args[0]
+    return np.e**(x * mu)
+
+def findiff(boundary_type, D, x_min, x_max, nx, l_bound, r_bound, source, source_args):
+
+    if boundary_type == 'dirichlet':
+        size = nx-1
+    
+    dx = (x_max - x_min) / nx
+    x_arr = np.linspace(x_min, x_max, nx+1)
+
+    A = pde_solver.sparse_A(size, -2*D, D)
+    b = np.zeros(size)
+    b[0] = l_bound
+    b[-1] = r_bound
+    b = b*D
+    q = source(x_arr[1:-1], source_args)
+
+    sol = sp.sparse.linalg.spsolve(A, -b - (dx**2)*q)
+    sol = np.concatenate((np.array([l_bound]), sol, np.array([r_bound])))
+
+    return np.vstack([sol, x_arr])
+
+D = 1
+x_min = 0
+x_max = 1
+nx = 100
+l = 0
+r = 0
+source_args = [0]
+
+test = findiff('dirichlet', D, x_min, x_max, nx, l, r, testsourcefunc, source_args)
+
+def truth(x, D, a, b, l, r):
+    #return ((r - l)/(b - a))*(x - a) + l
+    return (-1/(2*D)) * (x-a) * (x-b) + ((r-l)/(b-a)) * (x-a) + l
+
+plt.plot(test[-1], test[0])
+plt.plot(test[-1], truth(test[-1], D, x_min, x_max, l, r))
+
+# %%
+def bratu_pseudo(x, args):
+    mu = args[0]
+    sol = findiff('dirichlet', 1, 0, 1, 100, 0, 0, bratu_source, [mu])
+    return x-max(sol[0])
+
+test = numerical_continuation.pseudo_arclength(
+    func=bratu_pseudo,
+    x0=[1],
+    init_args=[0],
+    vary_par_idx=0,
+    max_par=4,
+    num_steps=50,
+)
+plt.plot(test[-1], test[0])

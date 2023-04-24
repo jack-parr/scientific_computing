@@ -14579,68 +14579,6 @@ body[data-format='mobile'] .jp-OutputArea-child .jp-OutputArea-output {
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<h1 id="heading-1">heading 1<a class="anchor-link" href="#heading-1">&#182;</a></h1><p>text</p>
-<h2 id="heading-1.1">heading 1.1<a class="anchor-link" href="#heading-1.1">&#182;</a></h2><h3 id="heading-1.1.1">heading 1.1.1<a class="anchor-link" href="#heading-1.1.1">&#182;</a></h3><p><em>italic</em>
-<strong>bold</strong>
-<u>underlined text</u></p>
-<p><h1><center>Centered heading</center></h1></p>
-<center>Centered text</center><hr>
-<p>text</p>
-<hr>
-<p>insert image template</p>
-<p><img src="testimage.png" alt="testim" class="bg-primary mb-1" width="400px"></p>
-
-</div>
-</div>
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
-<div class="jp-Cell-inputWrapper">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[&nbsp;]:</div>
-<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-     <div class="CodeMirror cm-s-jupyter">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-</pre></div>
-
-     </div>
-</div>
-</div>
-</div>
-
-</div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
-<div class="jp-Cell-inputWrapper">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<p>Plan:</p>
-<ul>
-<li>page limit is 15, however 8-10 is preferred</li>
-<li>describe functionality of each file</li>
-<li>include examples</li>
-<li>error plots</li>
-<li>compare against known truth plots</li>
-<li>explain design process</li>
-<li>including why certain decisions were made</li>
-<li>like standardising input and output format</li>
-<li>implementing unit tests</li>
-<li>input format tests within each function to handle errors informatively</li>
-<li>reflective learning log</li>
-</ul>
-
-</div>
-</div>
-</div>
-</div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
-<div class="jp-Cell-inputWrapper">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
 <hr>
 <p><h1><center>EMAT30008 Scientific Computing Report</center></h1></p>
 <h3><center>Jack Parr - 1925164</center></h3>
@@ -14674,7 +14612,10 @@ To demonstrate the use of <em>orbit_shoot</em>, the predator-prey equations are 
 <p>Parameter $\beta$ varies between [0, 2]. Figure X illustrates how <em>natural_continuation</em> has the same issue of failing at the fold bifurcation point, but this is now expected. This example shows how discretisation functions can be applied to both methods.</p>
 <center><img src="Report Figs/sec1-3_hopf.png" alt="6" class="bg-primary mb-1" width="400px"></center><h4 id="1.4---pde_solver.py">1.4 - pde_solver.py<a class="anchor-link" href="#1.4---pde_solver.py">&#182;</a></h4><p>This file provides the ability to solve diffusive PDE equations. Different boundary conditions can be specified, which can be of dirichlet, neumann, or robin form. The problem is solved using sparse matrices, and the method used to solve can also be choosen from method of lines, explicit Euler, implicit Euler, or Crank-Nicolson. To demonstrate them, the linear diffusion equation is solved, which is defined by $\frac{\partial u}{\partial t} = D \frac{\partial^2 u}{\partial x^2}$, with boundary conditions $u(0,t) = u(1,t) = 0$, initial condition $u(x,0) = \sin(\pi x)$, and parameters $D=0.1, N=100$. Note that for implicit Euler and Crank-Nicolson methods, $\delta t = 0.1$ is used, however the stability condition limits the method of lines and explicit Euler methods to $\delta t = 0.0005$ is the maximum they are capable of using for this problem. Figure X shows how the method of lines performs very poorly, while the implicit Euler and Crank-Nicolson are very precise. Through experimenting using the function, it is found that altering the initial condition greatly impacts the solution found, so the method of lines can be made to produce an accurate answer at the cost of the other methods subsequently performing poorly.</p>
 <center><img src="Report Figs/sec1-4_lineardiff.png" alt="7" class="bg-primary mb-1" width="400px"></center><hr>
-<h3 id="2---Section-2">2 - Section 2<a class="anchor-link" href="#2---Section-2">&#182;</a></h3><h4 id="2.1---Sec-2.1">2.1 - Sec 2.1<a class="anchor-link" href="#2.1---Sec-2.1">&#182;</a></h4><hr>
+<h3 id="2---Software-Design">2 - Software Design<a class="anchor-link" href="#2---Software-Design">&#182;</a></h3><p>This section describes key software design decisions that were made throughout the development, and how they link towards the overall goal. In order to make the software easy to understand and use, early in the design process a standard format of outputs was decided upon, which is an numpy.ndarray with a row of values for each relevant element being returned, with solved variables always coming first. This was chosen because most of the outputs of the functions within the software are best visualised with a plot. Structuring the outputs like this makes indexing the different elements for the plots easy. An alternative approach could have been to return each element as its own different variable (eg: return x, b) however this was avoided as it makes errors involving unequal length dimensions of the outputs more likely to go unnoticed. Containing everything into the same ndarray makes it easy to ensure the outputs are all consistent.</p>
+<p>Similarly, the formats of the inputs was standardised too to make combining the functions easier. This became especially important in cases such as the numerical continuation functions, which use the <em>shooting_problem</em> function from numerical shooting as a discretisation function. Standardising the inputs also makes it easier to combine the PDE solver with numerical continuation using a simple wrapper which the user custom makes for their problem. In cases like these, the documentation of the software becomes the primary source of understanding for the user.</p>
+<p>Therefore, I also standardised the format of all the documentation, which is contained at the beginning of each function.</p>
+<hr>
 <h3 id="3---Section-3">3 - Section 3<a class="anchor-link" href="#3---Section-3">&#182;</a></h3><h4 id="3.1---Sec-3.1">3.1 - Sec 3.1<a class="anchor-link" href="#3.1---Sec-3.1">&#182;</a></h4>
 </div>
 </div>
