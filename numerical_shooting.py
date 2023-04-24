@@ -18,7 +18,7 @@ def shooting_problem(func):
     # INPUT CHECKS
     input_checks.test_function(func, 'func')
 
-    def S(x0, phase_con, func_args, phase_args):
+    def S(x0, phase_con, func_args=None, phase_args=None):
         """
         This is a function such that the root is the initial values is the periodic orbit of the ODE system 'func'.
         ----------

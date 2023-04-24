@@ -74,7 +74,7 @@ def solve_diffusion(method, boundary_type, l_bound_func, r_bound_func, init_func
     nt : int
         Number of t values in the grid, affects step sized used for t.
     source_func : function
-        Function that takes singular values (x, t) and list (args) as inputs and returns source value.
+        Function that takes singular values (x, t, u) and list (args) as inputs and returns source value.
     l_bound_args : list OR numpy.ndarray
         Additional arguments needed by 'l_bound_func'.
     r_bound_args : list OR numpy.ndarray
