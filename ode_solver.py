@@ -76,15 +76,13 @@ def rk4_step(func, x0, t0, delta_t, args):
     return x0 + (k1/6 + k2/3 + k3/3 + k4/6)*delta_t, t1
 
 
-def solve_to(func, method, x0, t0, t1, deltat_max, args=None):
+def solve_to(func, x0, t0, t1, deltat_max, method='rk4', args=None):
     """
     Solves the function from (x0, t0) to (x1, t1) taking steps no larger than 'deltat_max', using the method defined by 'method'.
     ----------
     Parameters
     func : function
         The ODE to solve. The ODE function should be in first-order form, take a single list input and return the right-hand side of the ODE as a numpy.array. 
-    method : string
-        Either 'euler' for Euler method, or 'rk4' for 4th-Order Runge-Kutta method.
     x0 : list OR numpy.ndarray
         Initial values at 't0'.
     t0 : float OR int
@@ -93,6 +91,8 @@ def solve_to(func, method, x0, t0, t1, deltat_max, args=None):
         Desired time value.
     deltat_max : float OR int
         Maximum allowed timestep.
+    method : string
+        Either 'euler' for Euler method, or 'rk4' for 4th-Order Runge-Kutta method. Defaults to RK4.
     args : list OR numpy.ndarray
         Additional parameters needed by 'func'.
     ----------
