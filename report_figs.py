@@ -489,8 +489,8 @@ plt.plot(test[-1], truth(test[-1], D, x_min, x_max, l, r))
 # %%
 def bratu_pseudo(x, args):
     mu = args[0]
-    sol = findiff('dirichlet', 1, 0, 1, 100, 0, 0, bratu_source, [mu])
-    return x-max(sol[0])
+    sol = pde_solver.solve_diffusion('dirichlet', 1, 0, 1, 100, 0, 0, bratu_source, [mu])
+    return np.array([x-max(sol[0])])
 
 test = numerical_continuation.pseudo_arclength(
     func=bratu_pseudo,
