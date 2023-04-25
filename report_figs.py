@@ -363,6 +363,44 @@ plt.title('Solving the Linear Diffusion PDE')
 plt.legend(['Method of Lines', 'Explicit Euler', 'Implicit Euler', 'Crank-Nicolson', 'u(0.5,2) Exact'])
 plt.grid()
 # %%
+def diff_l_bound_dirneu(x, t, u, args):
+    return 0
+
+def diff_l_bound_rob(x, t, u, args):
+    delta, gamma = args
+    return delta - (gamma*u[0])
+
+def diff_r_bound_dirneu(x, t, u, args):
+    return 0
+
+def diff_r_bound_rob(x, t, u, args):
+    delta, gamma = args
+    return delta - (gamma*u[-1])
+
+def diff_init(x, t, u, args):
+    y = np.sin(np.pi * x)
+    return y
+
+xee = pde_solver.solve_diffusion(
+    method='explicit_euler', 
+    l_bound_type='neumann', 
+    r_bound_type='robin',
+    l_bound_func=diff_l_bound_dirneu, 
+    r_bound_func=diff_r_bound_rob, 
+    init_func=diff_init, 
+    D=0.1, 
+    x_min=0, 
+    x_max=1, 
+    nx=100, 
+    t_min=0, 
+    t_max=2, 
+    nt=200, 
+    l_bound_args=[1, 0],
+    r_bound_args=[1, 0],
+    use_sparse=False
+    )
+# %%
+# CHANGE THIS ONE FOR NEUMANN FIGURE
 xmol = pde_solver.solve_diffusion(
             method='lines', 
             boundary_type='neumann', 
@@ -471,65 +509,24 @@ ts = np.array(t_stor)
 print(t_stor)
 # %%
 # PDE WITH NUM CON
-def bratu_l_bound(x, t, args):
+def bratu_l_bound(x, t, u, args):
     return 0
 
-def bratu_r_bound(x, t, args):
+def bratu_r_bound(x, t, u, args):
     return 0
 
-def bratu_init(x, t, args):
+def bratu_init(x, t, u, args):
     D, a, b, gamma1, gamma2 = args
     return (-1/(2*D)) * (x-a) * (x-b) + ((gamma2-gamma1)/(b-a)) * (x-a) + gamma1
 
 def bratu_source(x, t, u, args):
     mu = args[0]
     return math.e**(mu * u)
-# %%
-def testsourcefunc(x, args):
-    mu = args[0]
-    return np.e**(x * mu)
 
-def findiff(boundary_type, D, x_min, x_max, nx, l_bound, r_bound, source, source_args):
 
-    if boundary_type == 'dirichlet':
-        size = nx-1
-    
-    dx = (x_max - x_min) / nx
-    x_arr = np.linspace(x_min, x_max, nx+1)
-
-    A = pde_solver.sparse_A(size, -2*D, D)
-    b = np.zeros(size)
-    b[0] = l_bound
-    b[-1] = r_bound
-    b = b*D
-    q = source(x_arr[1:-1], source_args)
-
-    sol = sp.sparse.linalg.spsolve(A, -b - (dx**2)*q)
-    sol = np.concatenate((np.array([l_bound]), sol, np.array([r_bound])))
-
-    return np.vstack([sol, x_arr])
-
-D = 1
-x_min = 0
-x_max = 1
-nx = 100
-l = 0
-r = 0
-source_args = [0]
-
-test = findiff('dirichlet', D, x_min, x_max, nx, l, r, testsourcefunc, source_args)
-
-def truth(x, D, a, b, l, r):
-    #return ((r - l)/(b - a))*(x - a) + l
-    return (-1/(2*D)) * (x-a) * (x-b) + ((r-l)/(b-a)) * (x-a) + l
-
-plt.plot(test[-1], test[0])
-plt.plot(test[-1], truth(test[-1], D, x_min, x_max, l, r))
-
-# %%
 def bratu_pseudo(x, args):
     mu = args[0]
-    sol = pde_solver.solve_diffusion('crank_nicolson', 'dirichlet', bratu_l_bound, bratu_r_bound, bratu_init, 1, 0, 1, 100, 0, 1, 100, bratu_source, init_args=[1, 0, 1, 0, 0], source_args=[mu])
+    sol = pde_solver.solve_diffusion('crank_nicolson', 'dirichlet', 'dirichlet', bratu_l_bound, bratu_r_bound, bratu_init, 1, 0, 1, 100, 0, 1, 100, bratu_source, init_args=[1, 0, 1, 0, 0], source_args=[mu])
     return x-max(sol[0])
 
 test = numerical_continuation.pseudo_arclength(
@@ -539,7 +536,6 @@ test = numerical_continuation.pseudo_arclength(
     vary_par_idx=0,
     max_par=4,
     num_steps=100,
-    discretisation=numerical_shooting.shooting_problem,
 )
 plt.plot(test[-1], test[0])
 # %%

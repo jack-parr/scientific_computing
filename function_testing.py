@@ -107,20 +107,20 @@ x_true = bvp_true(x_pred[-1], 1, 0, 1, 0, 0)
 plt.plot(x_pred[-1], x_pred[0])
 #plt.plot(x_pred[-1], x_true)
 # %%
-def diff_l_bound(x, t, args):
+def diff_l_bound(x, t, u, args):
     return 0
 
 
-def diff_r_bound_dirneu(x, t, args):
+def diff_r_bound_dirneu(x, t, u, args):
     return 0
 
 
-def diff_r_bound_rob(x, t, args):
+def diff_r_bound_rob(x, t, u, args):
     delta, gamma = args
-    return delta - (gamma*x)
+    return delta - (gamma*u[-1])
 
 
-def diff_init(x, t, args):
+def diff_init(x, t, u, args):
     x_min, x_max = args
     y = np.sin((math.pi * x) / (x_max - x_min))
     return y
