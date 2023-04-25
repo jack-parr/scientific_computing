@@ -188,14 +188,14 @@ def solve_diffusion(method, l_bound_type, r_bound_type, l_bound_func, r_bound_fu
         elif l_bound_type == 'neumann':
             b[0] = l_bound_func(x_min, t, u_t, l_bound_args) * -2 * dx
         elif l_bound_type == 'robin':
-            b[0] = l_bound_func(x_min, t, u_t, [l_bound_args[0], 0]) * -2 * dx
+            b[0] = l_bound_func(x_min, t, u_t[0], [l_bound_args[0], 0]) * -2 * dx
         
         if r_bound_type == 'dirichlet':
             b[-1] = r_bound_func(x_max, t, u_t, r_bound_args)
         elif r_bound_type == 'neumann':
             b[-1] = r_bound_func(x_max, t, u_t, r_bound_args) * 2 * dx
         elif r_bound_type == 'robin':
-            b[-1] = r_bound_func(x_max, t, u_t, [r_bound_args[0], 0]) * 2 * dx
+            b[-1] = r_bound_func(x_max, t, u_t[-1], [r_bound_args[0], 0]) * 2 * dx
 
         return b
     
