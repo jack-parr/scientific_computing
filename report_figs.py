@@ -39,8 +39,8 @@ def true2(t):
         y.append(math.cos(s) - math.sin(s))
     return np.array([x, y])
 
-euler_func2 = ode_solver.solve_to(func2, 'euler', [1,1], 0, 5, 0.01)
-rk4_func2 = ode_solver.solve_to(func2, 'rk4', [1,1], 0, 5, 0.01)
+euler_func2 = ode_solver.solve_to(func2, [1,1], 0, 5, 0.01, 'euler')
+rk4_func2 = ode_solver.solve_to(func2, [1,1], 0, 5, 0.01, 'rk4')
 plt.subplot(2,1,1)
 plt.plot(euler_func2[-1], euler_func2[0])
 plt.plot(rk4_func2[-1], rk4_func2[0])
@@ -274,23 +274,24 @@ plt.title('Pseudo-arclength on problems using BVP solver.')
 plt.grid()
 # %%
 # 1.4 diffusion linear
-def diff_l_bound(x, t, args):
+def diff_l_bound(x, t, u, args):
     return 0
 
-def diff_r_bound_dirneu(x, t, args):
+def diff_r_bound_dirneu(x, t, u, args):
     return 0
 
-def diff_r_bound_rob(x, t, args):
+def diff_r_bound_rob(x, t, u, args):
     delta, gamma = args
-    return delta - (gamma*x)
+    return delta - (gamma*u)
 
-def diff_init(x, t, args):
+def diff_init(x, t, u, args):
     y = np.sin(np.pi * x)
     return y
 # %%
 xmol = pde_solver.solve_diffusion(
             method='lines', 
-            boundary_type='dirichlet', 
+            l_bound_type='dirichlet', 
+            r_bound_type='dirichlet',
             l_bound_func=diff_l_bound, 
             r_bound_func=diff_r_bound_dirneu, 
             init_func=diff_init, 
@@ -306,7 +307,8 @@ xmol = pde_solver.solve_diffusion(
 
 xee = pde_solver.solve_diffusion(
             method='explicit_euler', 
-            boundary_type='dirichlet', 
+            l_bound_type='dirichlet', 
+            r_bound_type='dirichlet', 
             l_bound_func=diff_l_bound, 
             r_bound_func=diff_r_bound_dirneu, 
             init_func=diff_init, 
@@ -322,7 +324,8 @@ xee = pde_solver.solve_diffusion(
 
 xie = pde_solver.solve_diffusion(
             method='implicit_euler', 
-            boundary_type='dirichlet', 
+            l_bound_type='dirichlet', 
+            r_bound_type='dirichlet', 
             l_bound_func=diff_l_bound, 
             r_bound_func=diff_r_bound_dirneu, 
             init_func=diff_init, 
@@ -338,7 +341,8 @@ xie = pde_solver.solve_diffusion(
 
 xcn = pde_solver.solve_diffusion(
             method='crank_nicolson', 
-            boundary_type='dirichlet', 
+            l_bound_type='dirichlet', 
+            r_bound_type='dirichlet', 
             l_bound_func=diff_l_bound, 
             r_bound_func=diff_r_bound_dirneu, 
             init_func=diff_init, 
@@ -359,8 +363,87 @@ plt.plot(xcn[-1], xcn[0])
 plt.plot(0.5, math.e**(-0.2 * math.pi * math.pi), 'ok')
 plt.xlabel('x')
 plt.ylabel('u(x,2)')
-plt.title('Solving the Linear Diffusion PDE')
+plt.title('(a)')
 plt.legend(['Method of Lines', 'Explicit Euler', 'Implicit Euler', 'Crank-Nicolson', 'u(0.5,2) Exact'])
+plt.grid()
+# %%
+xmol = pde_solver.solve_diffusion(
+            method='lines', 
+            l_bound_type='neumann', 
+            r_bound_type='neumann',
+            l_bound_func=diff_l_bound, 
+            r_bound_func=diff_r_bound_dirneu, 
+            init_func=diff_init, 
+            D=0.1, 
+            x_min=0, 
+            x_max=1, 
+            nx=100, 
+            t_min=0, 
+            t_max=2, 
+            nt=200, 
+            use_sparse=False
+            )
+
+xee = pde_solver.solve_diffusion(
+            method='explicit_euler', 
+            l_bound_type='neumann', 
+            r_bound_type='neumann', 
+            l_bound_func=diff_l_bound, 
+            r_bound_func=diff_r_bound_dirneu, 
+            init_func=diff_init, 
+            D=0.1, 
+            x_min=0, 
+            x_max=1, 
+            nx=100, 
+            t_min=0, 
+            t_max=2, 
+            nt=200, 
+            use_sparse=False
+            )
+
+xie = pde_solver.solve_diffusion(
+            method='implicit_euler', 
+            l_bound_type='neumann', 
+            r_bound_type='neumann', 
+            l_bound_func=diff_l_bound, 
+            r_bound_func=diff_r_bound_dirneu, 
+            init_func=diff_init, 
+            D=0.1, 
+            x_min=0, 
+            x_max=1, 
+            nx=100, 
+            t_min=0, 
+            t_max=2, 
+            nt=200, 
+            use_sparse=False
+            )
+
+xcn = pde_solver.solve_diffusion(
+            method='crank_nicolson', 
+            l_bound_type='neumann', 
+            r_bound_type='neumann', 
+            l_bound_func=diff_l_bound, 
+            r_bound_func=diff_r_bound_dirneu, 
+            init_func=diff_init, 
+            D=0.1, 
+            x_min=0, 
+            x_max=1, 
+            nx=100, 
+            t_min=0, 
+            t_max=2, 
+            nt=200, 
+            use_sparse=False
+            )
+
+
+plt.plot(xmol[-1], xmol[0])
+plt.plot(xee[-1], xee[0])
+plt.plot(xie[-1], xie[0])
+plt.plot(xcn[-1], xcn[0])
+plt.xlabel('x')
+plt.ylabel('u(x,2)')
+plt.title('(b)')
+plt.legend(['Method of Lines', 'Explicit Euler', 'Implicit Euler', 'Crank-Nicolson'])
 plt.grid()
 # %%
 def diff_l_bound_dirneu(x, t, u, args):
@@ -399,81 +482,6 @@ xee = pde_solver.solve_diffusion(
     r_bound_args=[1, 0],
     use_sparse=False
     )
-# %%
-# CHANGE THIS ONE FOR NEUMANN FIGURE
-xmol = pde_solver.solve_diffusion(
-            method='lines', 
-            boundary_type='neumann', 
-            l_bound_func=diff_l_bound, 
-            r_bound_func=diff_r_bound_dirneu, 
-            init_func=diff_init, 
-            D=0.1, 
-            x_min=0, 
-            x_max=1, 
-            nx=100, 
-            t_min=0, 
-            t_max=2, 
-            nt=200, 
-            use_sparse=False
-            )
-
-xee = pde_solver.solve_diffusion(
-            method='explicit_euler', 
-            boundary_type='neumann', 
-            l_bound_func=diff_l_bound, 
-            r_bound_func=diff_r_bound_dirneu, 
-            init_func=diff_init, 
-            D=0.1, 
-            x_min=0, 
-            x_max=1, 
-            nx=100, 
-            t_min=0, 
-            t_max=2, 
-            nt=200, 
-            use_sparse=False
-            )
-
-xie = pde_solver.solve_diffusion(
-            method='implicit_euler', 
-            boundary_type='neumann', 
-            l_bound_func=diff_l_bound, 
-            r_bound_func=diff_r_bound_dirneu, 
-            init_func=diff_init, 
-            D=0.1, 
-            x_min=0, 
-            x_max=1, 
-            nx=100, 
-            t_min=0, 
-            t_max=2, 
-            nt=200, 
-            use_sparse=False
-            )
-
-xcn = pde_solver.solve_diffusion(
-            method='crank_nicolson', 
-            boundary_type='neumann', 
-            l_bound_func=diff_l_bound, 
-            r_bound_func=diff_r_bound_dirneu, 
-            init_func=diff_init, 
-            D=0.1, 
-            x_min=0, 
-            x_max=1, 
-            nx=100, 
-            t_min=0, 
-            t_max=2, 
-            nt=200, 
-            use_sparse=False
-            )
-
-plt.plot(xmol[-1], xmol[0])
-plt.plot(xee[-1], xee[0])
-plt.plot(xie[-1], xie[0])
-plt.plot(xcn[-1], xcn[0])
-plt.xlabel('x')
-plt.ylabel('u(x,2)')
-plt.title('Solving the Linear Diffusion PDE (Neumann RHS)')
-plt.legend(['Method of Lines', 'Explicit Euler', 'Implicit Euler', 'Crank-Nicolson'])
-plt.grid()
 # %%
 methods = ['lines', 'explicit_euler', 'implicit_euler', 'crank_nicolson']
 sparses = [False, True]
@@ -519,6 +527,7 @@ def bratu_init(x, t, u, args):
     D, a, b, gamma1, gamma2 = args
     return (-1/(2*D)) * (x-a) * (x-b) + ((gamma2-gamma1)/(b-a)) * (x-a) + gamma1
 
+
 def bratu_source(x, t, u, args):
     mu = args[0]
     return math.e**(mu * u)
@@ -535,7 +544,12 @@ test = numerical_continuation.pseudo_arclength(
     init_args=[0],
     vary_par_idx=0,
     max_par=4,
-    num_steps=100,
+    num_steps=50,
 )
+
 plt.plot(test[-1], test[0])
+plt.xlabel('$\mu$')
+plt.ylabel('Max of u(x)')
+plt.title('Numerical Continuation on the Bratu Problem')
+plt.grid()
 # %%

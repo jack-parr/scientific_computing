@@ -33,9 +33,9 @@ def euler_step(func, x0, t0, delta_t, args):
         input_checks.test_list_nparray(args, 'args')
 
     grad = func(x0, t0, args)
-    t1 = t0 + delta_t
+    t_new = t0 + delta_t
 
-    return x0 + grad*delta_t, t1
+    return x0 + grad*delta_t, t_new
 
 
 def rk4_step(func, x0, t0, delta_t, args):
@@ -71,9 +71,9 @@ def rk4_step(func, x0, t0, delta_t, args):
     k2 = grad + (k1*delta_t)/2
     k3 = grad + (k2*delta_t)/2
     k4 = grad + (k3*delta_t)
-    t1 = t0 + delta_t
+    t_new = t0 + delta_t
 
-    return x0 + (k1/6 + k2/3 + k3/3 + k4/6)*delta_t, t1
+    return x0 + (k1/6 + k2/3 + k3/3 + k4/6)*delta_t, t_new
 
 
 def solve_to(func, x0, t0, t1, deltat_max, method='rk4', args=None):
@@ -122,7 +122,7 @@ def solve_to(func, x0, t0, t1, deltat_max, method='rk4', args=None):
     x_sol[0][-1] = t0
 
     i = 1
-    while not math.isclose(t0, t1):
+    while math.isclose(t0, t1) == False:
         x0, t0 = fstep(func, x0, t0, min([t1-t0, deltat_max]), args)
         x_sol[i][:len(x0)] = x0
         x_sol[i][-1] = t0

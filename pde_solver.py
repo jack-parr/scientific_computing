@@ -2,6 +2,7 @@ import scipy as sp
 import numpy as np
 import math
 import input_checks
+import ode_solver
 
 
 def sparse_A(size, dm, do):
@@ -205,13 +206,13 @@ def solve_diffusion(method, l_bound_type, r_bound_type, l_bound_func, r_bound_fu
         solver = np.linalg.solve
 
     if method == 'lines':
-        def PDE(t, u, A_mat, b_mat):
-            return C * (A_mat@u + b_mat + (dx**2) * (source_func(x_int, t_arr[j], u, source_args)))
-        for j in range(0, nt):
-            b = make_b(t_arr[j])
-            sol = sp.integrate.solve_ivp(PDE, (t_min, t_max), u_t, args=(A_mat, b))
-            u_t = sol.y[:,-1]
-            
+        def PDE(u, t, args):
+            A_mat, b = args
+            return (C/dt) * (A_mat@u + b + (dx**2) * (source_func(x_int, t, u, source_args)))
+        b = make_b(t_max)
+        sol = ode_solver.solve_to(PDE, u_t, t_min, t_max, dt, args=[A_mat, b])
+        u_t = sol[:,-1][:-1]
+        
     if method == 'explicit_euler':
         for j in range(0, nt):
             b = make_b(t_arr[j])
