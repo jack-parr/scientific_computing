@@ -144,13 +144,29 @@ print(errs[-1][idx2])
 # %%
 # TIMING THE METHODS AT SAME ACCURACY LEVEL
 eulert1 = time.time()
-euler_func1 = ode_solver.solve_to(func1, [1], 0, 1, 0.000115, 'euler')
+euler_func1 = ode_solver.solve_to(
+    func=func1, 
+    x0=[1], 
+    t0=0, 
+    t1=1, 
+    deltat_max=0.000115, 
+    method='euler',
+    )
 eulert2 = time.time()
+
 rk4t1 = time.time()
-rk4_func1 = ode_solver.solve_to(func1, [1], 0, 1, 0.312572, 'rk4')
+rk4_func1 = ode_solver.solve_to(
+    func=func1, 
+    x0=[1], 
+    t0=0, 
+    t1=1, 
+    deltat_max=0.312572, 
+    method='rk4',
+    )
 rk4t2 = time.time()
-print('Euler (seconds): ' + str(1000*(eulert2-eulert1)))
-print('RK4 (seconds): ' + str(1000*(rk4t2-rk4t1)))
+
+print('Euler (ms): ' + str(1000*(eulert2-eulert1)))
+print('RK4 (ms): ' + str(1000*(rk4t2-rk4t1)))
 
 # %%
 # FIGURE 4
